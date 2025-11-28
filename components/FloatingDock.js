@@ -3,18 +3,42 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Gift, Calendar, User, PlusCircle } from "lucide-react";
+import { Home, Gift, Calendar, User, PlusCircle, LogIn } from "lucide-react";
+import { useState, useEffect } from "react";
 
-const dockItems = [
-    { title: "Home", icon: Home, path: "/" },
-    { title: "My Events", icon: Calendar, path: "/dashboard" },
+const allDockItems = [
+    { title: "Home", icon: Home, path: "/", hideWhenLoggedIn: true },
+    { title: "My Events", icon: Calendar, path: "/dashboard", requireAuth: true },
     { title: "Create", icon: PlusCircle, path: "/create" },
     { title: "Join", icon: Gift, path: "/join" },
-    { title: "Profile", icon: User, path: "/profile" },
+    { title: "Profile", icon: User, path: "/profile", requireAuth: true },
+    { title: "Login", icon: LogIn, path: "/login", hideWhenLoggedIn: true },
 ];
 
 export default function FloatingDock() {
     const pathname = usePathname();
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+    useEffect(() => {
+        // Check auth status via API endpoint
+        const checkAuth = async () => {
+            try {
+                const res = await fetch('/api/auth/check');
+                const data = await res.json();
+                setIsLoggedIn(data.isLoggedIn);
+            } catch (error) {
+                setIsLoggedIn(false);
+            }
+        };
+        checkAuth();
+    }, [pathname]);
+
+    // Filter items based on auth status
+    const dockItems = allDockItems.filter(item => {
+        if (item.hideWhenLoggedIn && isLoggedIn) return false;
+        if (item.requireAuth && !isLoggedIn) return false;
+        return true;
+    });
 
     return (
         <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50 hidden md:flex">

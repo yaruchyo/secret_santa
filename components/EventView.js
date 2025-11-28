@@ -139,7 +139,7 @@ export default function EventView({ initialEvent, user }) {
         });
 
         if (res.ok) {
-            router.push("/");
+            router.push("/dashboard");
             router.refresh();
         } else {
             alert("Failed to leave event");
@@ -270,7 +270,7 @@ export default function EventView({ initialEvent, user }) {
                                                 <span className="flex-1 text-gray-200">{item}</span>
                                                 <button
                                                     onClick={() => handleRemoveWishItem(index)}
-                                                    className="text-gray-500 hover:text-error transition-colors opacity-0 group-hover:opacity-100"
+                                                    className="text-gray-500 hover:text-error transition-colors"
                                                 >
                                                     <X size={18} />
                                                 </button>

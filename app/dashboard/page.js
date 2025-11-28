@@ -96,11 +96,18 @@ export default function Dashboard() {
                         </div>
                         <h3 className="text-xl font-bold mb-2">No Events Yet</h3>
                         <p className="text-gray-400 mb-6">You haven't joined or created any Secret Santa events.</p>
-                        <Link href="/create">
-                            <button className="text-primary hover:text-white font-semibold transition-colors">
-                                Create your first event →
-                            </button>
-                        </Link>
+                        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                            <Link href="/create">
+                                <button className="px-6 py-3 bg-primary text-background-secondary font-bold rounded-xl hover:bg-primary-hover transition-colors flex items-center gap-2">
+                                    <Plus size={20} /> Create Event
+                                </button>
+                            </Link>
+                            <Link href="/join">
+                                <button className="px-6 py-3 bg-white/5 border border-white/10 text-white font-semibold rounded-xl hover:bg-white/10 hover:border-white/20 transition-colors">
+                                    Join Event
+                                </button>
+                            </Link>
+                        </div>
                     </GlassCard>
                 )}
             </div>

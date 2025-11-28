@@ -5,12 +5,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const menuItems = [
-    { title: "Home", path: "/" },
-    { title: "My Events", path: "/dashboard" },
+const allMenuItems = [
+    { title: "Home", path: "/", hideWhenLoggedIn: true },
+    { title: "My Events", path: "/dashboard", requireAuth: true },
     { title: "Create Event", path: "/create" },
     { title: "Join Event", path: "/join" },
-    { title: "Profile", path: "/profile" },
+    { title: "Profile", path: "/profile", requireAuth: true },
+    { title: "Login", path: "/login", hideWhenLoggedIn: true },
 ];
 
 const sidebar = {
@@ -61,12 +62,34 @@ const itemVariants = {
 
 export default function StaggeredMenu() {
     const [isOpen, setIsOpen] = useState(false);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
     const pathname = usePathname();
+
+    // Check authentication status
+    useEffect(() => {
+        const checkAuth = async () => {
+            try {
+                const res = await fetch('/api/auth/check');
+                const data = await res.json();
+                setIsLoggedIn(data.isLoggedIn);
+            } catch (error) {
+                setIsLoggedIn(false);
+            }
+        };
+        checkAuth();
+    }, [pathname]);
 
     // Close menu when route changes
     useEffect(() => {
         setIsOpen(false);
     }, [pathname]);
+
+    // Filter items based on auth status
+    const menuItems = allMenuItems.filter(item => {
+        if (item.hideWhenLoggedIn && isLoggedIn) return false;
+        if (item.requireAuth && !isLoggedIn) return false;
+        return true;
+    });
 
     return (
         <motion.nav
