@@ -209,26 +209,28 @@ export default function EventView({ initialEvent, user }) {
                                 <div className="relative min-h-[300px] rounded-2xl overflow-hidden bg-black/20 border border-white/5">
                                     <RevealOverlay isRevealed={isRevealed} onReveal={handleReveal} />
 
-                                    <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center">
-                                        <p className="text-gray-400 uppercase tracking-widest text-sm mb-4">You are gifting to</p>
-                                        <h3 className="text-4xl md:text-5xl font-serif font-bold text-gold-gradient mb-8">
-                                            {event.myAssignment.receiverName}
-                                        </h3>
+                                    <div className="absolute inset-0 overflow-y-auto custom-scrollbar">
+                                        <div className="min-h-full flex flex-col items-center justify-center p-8 text-center">
+                                            <p className="text-gray-400 uppercase tracking-widest text-sm mb-4">You are gifting to</p>
+                                            <h3 className="text-4xl md:text-5xl font-serif font-bold text-gold-gradient mb-8">
+                                                {event.myAssignment.receiverName}
+                                            </h3>
 
-                                        <div className="w-full max-w-md bg-white/5 rounded-xl p-6 border border-white/10 text-left">
-                                            <p className="text-sm font-bold text-primary mb-4 uppercase tracking-wider">Their Wishlist</p>
-                                            {event.myAssignment.receiverWishlist && event.myAssignment.receiverWishlist.length > 0 ? (
-                                                <ul className="space-y-3">
-                                                    {event.myAssignment.receiverWishlist.map((item, i) => (
-                                                        <li key={i} className="flex items-start gap-3 text-gray-300">
-                                                            <span className="text-primary/50 font-mono">{i + 1}.</span>
-                                                            {item}
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                            ) : (
-                                                <p className="italic text-gray-500">They haven't added any wishes yet.</p>
-                                            )}
+                                            <div className="w-full max-w-md bg-white/5 rounded-xl p-6 border border-white/10 text-left">
+                                                <p className="text-sm font-bold text-primary mb-4 uppercase tracking-wider">Their Wishlist</p>
+                                                {event.myAssignment.receiverWishlist && event.myAssignment.receiverWishlist.length > 0 ? (
+                                                    <ul className="space-y-3">
+                                                        {event.myAssignment.receiverWishlist.map((item, i) => (
+                                                            <li key={i} className="flex items-start gap-3 text-gray-300">
+                                                                <span className="text-primary/50 font-mono">{i + 1}.</span>
+                                                                {item}
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                ) : (
+                                                    <p className="italic text-gray-500">They haven't added any wishes yet.</p>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

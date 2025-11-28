@@ -9,6 +9,11 @@ async function getEvent(id, user) {
     const client = await clientPromise;
     const db = client.db(process.env.MONGO_DB_NAME);
 
+    // Validate ID format
+    if (!id || typeof id !== 'string' || !/^[0-9a-fA-F]{24}$/.test(id)) {
+        return null;
+    }
+
     let event = await db.collection('events').findOne({ _id: new ObjectId(id) });
 
     if (!event) return null;

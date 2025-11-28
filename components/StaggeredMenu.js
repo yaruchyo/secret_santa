@@ -72,17 +72,17 @@ export default function StaggeredMenu() {
         <motion.nav
             initial={false}
             animate={isOpen ? "open" : "closed"}
-            className="fixed top-0 right-0 bottom-0 w-[300px] z-50 md:hidden"
+            className="fixed top-0 right-0 bottom-0 w-[300px] z-50 md:hidden pointer-events-none"
         >
             <motion.div
-                className="absolute top-0 right-0 bottom-0 w-full bg-background-secondary/95 backdrop-blur-xl border-l border-glass-border"
+                className="absolute top-0 right-0 bottom-0 w-full bg-background-secondary/95 backdrop-blur-xl border-l border-glass-border pointer-events-auto"
                 variants={sidebar}
             />
 
             {/* Toggle Button */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="absolute top-[18px] right-[18px] w-[50px] h-[50px] rounded-full bg-transparent z-50 flex items-center justify-center focus:outline-none"
+                className="absolute top-[18px] right-[18px] w-[50px] h-[50px] rounded-full bg-transparent z-50 flex items-center justify-center focus:outline-none pointer-events-auto"
                 aria-label="Toggle Menu"
             >
                 <svg width="23" height="23" viewBox="0 0 23 23">
@@ -112,8 +112,7 @@ export default function StaggeredMenu() {
             {/* Menu Items */}
             <motion.ul
                 variants={variants}
-                className="absolute top-[100px] right-[40px] w-[220px] p-0 m-0 list-none z-40 text-right"
-                style={{ pointerEvents: isOpen ? "auto" : "none" }}
+                className="absolute top-[100px] right-[40px] w-[220px] p-0 m-0 list-none z-40 text-right pointer-events-auto"
             >
                 {menuItems.map((item) => (
                     <motion.li

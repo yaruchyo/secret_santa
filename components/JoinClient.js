@@ -8,7 +8,8 @@ import { Loader2 } from "lucide-react";
 
 export default function JoinClient({ isLoggedIn }) {
     const [code, setCode] = useState("");
-    const [showSignup, setShowSignup] = useState(false);
+    const [showAuth, setShowAuth] = useState(false);
+    const [authMode, setAuthMode] = useState("signup"); // 'signup' or 'login'
     const [formData, setFormData] = useState({ email: "", password: "", name: "" });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
@@ -31,7 +32,8 @@ export default function JoinClient({ isLoggedIn }) {
             if (res.ok) {
                 router.push(`/event/${data.eventId}`);
             } else if (res.status === 401) {
-                setShowSignup(true);
+                setShowAuth(true);
+                setAuthMode("signup"); // Default to signup for new users, but they can switch
                 setError("Please sign up or login to join this event");
             } else {
                 setError(data.error || "Failed to join event");
@@ -43,34 +45,45 @@ export default function JoinClient({ isLoggedIn }) {
         }
     };
 
-    const handleSignup = async (e) => {
+    const handleAuth = async (e) => {
         e.preventDefault();
         setError("");
         setLoading(true);
 
+        const isLogin = authMode === "login";
+        const endpoint = isLogin ? "/api/auth/login" : "/api/auth/signup";
+
         try {
-            const signupRes = await fetch("/api/auth/signup", {
+            // Step 1: Perform Auth (Login or Signup)
+            const authRes = await fetch(endpoint, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(formData),
+                body: JSON.stringify(isLogin ? { email: formData.email, password: formData.password } : formData),
             });
 
-            if (!signupRes.ok) {
-                const data = await signupRes.json();
-                throw new Error(data.error || "Signup failed");
+            if (!authRes.ok) {
+                const data = await authRes.json();
+                throw new Error(data.error || (isLogin ? "Login failed" : "Signup failed"));
             }
 
-            const loginRes = await fetch("/api/auth/login", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email: formData.email, password: formData.password }),
-            });
+            // If Signup was successful, we usually need to login automatically or the API might already set the cookie.
+            // Assuming the signup API creates the user but might not set the session cookie for immediate login depending on implementation.
+            // If your /api/auth/signup DOES NOT log the user in automatically, we need to call login.
+            // Based on previous code, it seems we did an explicit login after signup. Let's keep that pattern if we are in signup mode.
 
-            if (!loginRes.ok) {
-                throw new Error("Login failed after signup");
+            if (!isLogin) {
+                const loginRes = await fetch("/api/auth/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email: formData.email, password: formData.password }),
+                });
+
+                if (!loginRes.ok) {
+                    throw new Error("Login failed after signup");
+                }
             }
 
-            // Step 3: Branching Logic based on Invitation Code
+            // Step 2: Branching Logic based on Invitation Code
             const hasCode = code && code.trim().length > 0;
 
             if (hasCode) {
@@ -87,9 +100,12 @@ export default function JoinClient({ isLoggedIn }) {
                     router.push(`/event/${joinData.eventId}`);
                     router.refresh();
                 } else {
-                    // Account created, but join failed (e.g., full event or bad code)
-                    // We display the error so they can try entering the code again later
-                    setError(joinData.error || "Account created, but failed to join event.");
+                    // Account created/logged in, but join failed (e.g., full event or bad code)
+                    setError(joinData.error || "Authenticated, but failed to join event.");
+                    // We might want to close the auth modal here to let them try the code again,
+                    // but keeping it open with the error is also fine so they know what happened.
+                    // For better UX, let's close the auth modal so they see the main join screen with the error?
+                    // Or just show the error in the modal. Let's show in modal for now.
                 }
             } else {
                 // IF NO Code: Redirect to Dashboard immediately
@@ -104,7 +120,7 @@ export default function JoinClient({ isLoggedIn }) {
         }
     };
 
-    if (showSignup) {
+    if (showAuth) {
         return (
             <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-background">
                 <div className="absolute top-10 right-10 w-80 h-80 bg-primary/10 rounded-full blur-3xl animate-float"></div>
@@ -115,9 +131,8 @@ export default function JoinClient({ isLoggedIn }) {
                         <div className="text-center mb-6">
                             <span className="text-5xl mb-4 inline-block animate-float">🎉</span>
 
-                            {/* Dynamic Title based on context */}
                             <h1 className="text-2xl font-serif font-bold mb-2 text-gold-gradient">
-                                {code ? "Create Account to Join" : "Create Account"}
+                                {authMode === "login" ? "Welcome Back" : "Create Account"}
                             </h1>
 
                             {/* Only show code display if code exists */}
@@ -135,18 +150,20 @@ export default function JoinClient({ isLoggedIn }) {
                             </div>
                         )}
 
-                        <form onSubmit={handleSignup} className="space-y-4">
-                            <div>
-                                <label className="block text-xs uppercase tracking-widest text-gray-500 mb-1">Your Name</label>
-                                <input
-                                    type="text"
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
-                                    placeholder="John Doe"
-                                    value={formData.name}
-                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                    required
-                                />
-                            </div>
+                        <form onSubmit={handleAuth} className="space-y-4">
+                            {authMode === "signup" && (
+                                <div>
+                                    <label className="block text-xs uppercase tracking-widest text-gray-500 mb-1">Your Name</label>
+                                    <input
+                                        type="text"
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                                        placeholder="John Doe"
+                                        value={formData.name}
+                                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                        required
+                                    />
+                                </div>
+                            )}
 
                             <div>
                                 <label className="block text-xs uppercase tracking-widest text-gray-500 mb-1">Email Address</label>
@@ -176,21 +193,35 @@ export default function JoinClient({ isLoggedIn }) {
                                 {loading ? (
                                     <>
                                         <Loader2 size={20} className="animate-spin" />
-                                        Creating Account...
+                                        Processing...
                                     </>
                                 ) : (
-                                    // Dynamic Button Text
-                                    code ? "✨ Sign Up & Join Event" : "✨ Create Account"
+                                    code ? (authMode === "login" ? "Login & Join Event" : "Sign Up & Join Event") : (authMode === "login" ? "Login" : "Create Account")
                                 )}
                             </button>
 
                             <div className="text-center text-sm text-gray-400 mt-4 pt-4 border-t border-white/10">
-                                Already have an account?{" "}
-                                <Link href={`/login?code=${code}`} className="text-primary hover:text-primary-hover font-semibold">
-                                    Login instead
-                                </Link>
+                                {authMode === "signup" ? "Already have an account? " : "Don't have an account? "}
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setAuthMode(authMode === "signup" ? "login" : "signup");
+                                        setError("");
+                                    }}
+                                    className="text-primary hover:text-primary-hover font-semibold"
+                                >
+                                    {authMode === "signup" ? "Login instead" : "Create account"}
+                                </button>
                             </div>
                         </form>
+                        <div className="text-center mt-2">
+                            <button
+                                onClick={() => setShowAuth(false)}
+                                className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                        </div>
                     </GlassCard>
                 </div>
             </div>
@@ -262,11 +293,25 @@ export default function JoinClient({ isLoggedIn }) {
                         <div className="mt-8 text-center pt-6 border-t border-white/10">
                             <p className="text-sm text-gray-400 mb-2">Don't have an account?</p>
                             <button
-                                onClick={() => setShowSignup(true)}
+                                onClick={() => {
+                                    setShowAuth(true);
+                                    setAuthMode("signup");
+                                }}
                                 className="text-primary hover:text-primary-hover font-semibold transition-colors"
                             >
                                 {code ? "Create account to join →" : "Create account without code →"}
                             </button>
+                            <div className="mt-2">
+                                <button
+                                    onClick={() => {
+                                        setShowAuth(true);
+                                        setAuthMode("login");
+                                    }}
+                                    className="text-sm text-gray-500 hover:text-gray-300 transition-colors"
+                                >
+                                    Already have an account? Login
+                                </button>
+                            </div>
                         </div>
                     )}
                 </GlassCard>
