@@ -70,20 +70,33 @@ export default function JoinClient({ isLoggedIn }) {
                 throw new Error("Login failed after signup");
             }
 
-            const joinRes = await fetch("/api/events/join", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ code: code.toUpperCase() }),
-            });
+            // Step 3: Branching Logic based on Invitation Code
+            const hasCode = code && code.trim().length > 0;
 
-            const joinData = await joinRes.json();
+            if (hasCode) {
+                // IF Code exists: Call Join API
+                const joinRes = await fetch("/api/events/join", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ code: code.toUpperCase() }),
+                });
 
-            if (joinRes.ok) {
-                router.push(`/event/${joinData.eventId}`);
-                router.refresh();
+                const joinData = await joinRes.json();
+
+                if (joinRes.ok) {
+                    router.push(`/event/${joinData.eventId}`);
+                    router.refresh();
+                } else {
+                    // Account created, but join failed (e.g., full event or bad code)
+                    // We display the error so they can try entering the code again later
+                    setError(joinData.error || "Account created, but failed to join event.");
+                }
             } else {
-                setError(joinData.error || "Failed to join event");
+                // IF NO Code: Redirect to Dashboard immediately
+                router.push("/dashboard");
+                router.refresh();
             }
+
         } catch (err) {
             setError(err.message);
         } finally {
@@ -101,10 +114,18 @@ export default function JoinClient({ isLoggedIn }) {
                     <GlassCard className="w-full max-w-md animate-scale-in">
                         <div className="text-center mb-6">
                             <span className="text-5xl mb-4 inline-block animate-float">🎉</span>
-                            <h1 className="text-2xl font-serif font-bold mb-2 text-gold-gradient">Create Account to Join</h1>
-                            <p className="text-gray-400 text-sm">
-                                Event Code: <span className="text-primary font-mono font-bold text-lg">{code}</span>
-                            </p>
+
+                            {/* Dynamic Title based on context */}
+                            <h1 className="text-2xl font-serif font-bold mb-2 text-gold-gradient">
+                                {code ? "Create Account to Join" : "Create Account"}
+                            </h1>
+
+                            {/* Only show code display if code exists */}
+                            {code && (
+                                <p className="text-gray-400 text-sm">
+                                    Event Code: <span className="text-primary font-mono font-bold text-lg">{code}</span>
+                                </p>
+                            )}
                         </div>
 
                         {error && (
@@ -158,7 +179,8 @@ export default function JoinClient({ isLoggedIn }) {
                                         Creating Account...
                                     </>
                                 ) : (
-                                    "✨ Sign Up & Join Event"
+                                    // Dynamic Button Text
+                                    code ? "✨ Sign Up & Join Event" : "✨ Create Account"
                                 )}
                             </button>
 
@@ -175,6 +197,7 @@ export default function JoinClient({ isLoggedIn }) {
         );
     }
 
+    // Default "Join" View
     return (
         <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-background">
             <div className="absolute top-10 right-10 w-80 h-80 bg-primary/10 rounded-full blur-3xl animate-float"></div>
@@ -242,7 +265,7 @@ export default function JoinClient({ isLoggedIn }) {
                                 onClick={() => setShowSignup(true)}
                                 className="text-primary hover:text-primary-hover font-semibold transition-colors"
                             >
-                                Create account to join →
+                                {code ? "Create account to join →" : "Create account without code →"}
                             </button>
                         </div>
                     )}
