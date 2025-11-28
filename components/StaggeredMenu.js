@@ -72,10 +72,10 @@ export default function StaggeredMenu() {
         <motion.nav
             initial={false}
             animate={isOpen ? "open" : "closed"}
-            className="fixed top-0 right-0 bottom-0 w-[300px] z-50 md:hidden pointer-events-none"
+            className={`fixed top-0 right-0 bottom-0 w-[300px] z-50 md:hidden ${isOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}
         >
             <motion.div
-                className="absolute top-0 right-0 bottom-0 w-full bg-background-secondary/95 backdrop-blur-xl border-l border-glass-border pointer-events-auto"
+                className="absolute top-0 right-0 bottom-0 w-full bg-background-secondary/95 backdrop-blur-xl border-l border-glass-border"
                 variants={sidebar}
             />
 
@@ -112,7 +112,7 @@ export default function StaggeredMenu() {
             {/* Menu Items */}
             <motion.ul
                 variants={variants}
-                className="absolute top-[100px] right-[40px] w-[220px] p-0 m-0 list-none z-40 text-right pointer-events-auto"
+                className="absolute top-[100px] right-[40px] w-[220px] p-0 m-0 list-none z-40 text-right"
             >
                 {menuItems.map((item) => (
                     <motion.li
