@@ -6,15 +6,21 @@ import { motion, AnimatePresence } from "framer-motion";
 
 export default function RevealOverlay({ onReveal, isRevealed: initialIsRevealed = false }) {
     const canvasRef = useRef(null);
+    const containerRef = useRef(null);
     const [isRevealed, setIsRevealed] = useState(initialIsRevealed);
-    const [isDragging, setIsDragging] = useState(false);
+    const [showHintText, setShowHintText] = useState(true);
+    const [allowScroll, setAllowScroll] = useState(false);
+    const isDragging = useRef(false);
+    const isInitialized = useRef(false);
 
     // Sync internal state with prop
     useEffect(() => {
         if (initialIsRevealed && !isRevealed) {
             setIsRevealed(true);
+            setShowHintText(false);
+            setAllowScroll(true);
         }
-    }, [initialIsRevealed]);
+    }, [initialIsRevealed, isRevealed]);
 
     useEffect(() => {
         if (isRevealed) return;
@@ -22,53 +28,69 @@ export default function RevealOverlay({ onReveal, isRevealed: initialIsRevealed 
         const canvas = canvasRef.current;
         if (!canvas) return;
 
-        const ctx = canvas.getContext("2d");
-        const width = canvas.offsetWidth;
-        const height = canvas.offsetHeight;
+        const ctx = canvas.getContext("2d", { willReadFrequently: true });
 
-        canvas.width = width;
-        canvas.height = height;
+        // Set canvas size to match container
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = rect.height;
 
-        // Fill with "Frosted" look
-        ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-        ctx.fillRect(0, 0, width, height);
+        // Only draw initial overlay once
+        if (!isInitialized.current) {
+            // Fill with "Frosted" look - semi-transparent to see content beneath
+            ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Add noise/texture
-        for (let i = 0; i < width * height * 0.05; i++) {
-            const x = Math.random() * width;
-            const y = Math.random() * height;
-            ctx.fillStyle = `rgba(212, 175, 55, ${Math.random() * 0.2})`; // Gold noise
-            ctx.fillRect(x, y, 2, 2);
+            // Add noise/texture
+            for (let i = 0; i < canvas.width * canvas.height * 0.05; i++) {
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height;
+                ctx.fillStyle = `rgba(212, 175, 55, ${Math.random() * 0.2})`; // Gold noise
+                ctx.fillRect(x, y, 2, 2);
+            }
+
+            isInitialized.current = true;
         }
 
-        ctx.globalCompositeOperation = "destination-out";
-
-        const handleMove = (e) => {
-            if (!isDragging) return;
-            const rect = canvas.getBoundingClientRect();
-            const x = (e.clientX || e.touches[0].clientX) - rect.left;
-            const y = (e.clientY || e.touches[0].clientY) - rect.top;
-
+        const scratch = (x, y) => {
+            // Use destination-out to erase
+            ctx.globalCompositeOperation = "destination-out";
+            ctx.fillStyle = "rgba(0, 0, 0, 1)"; // Fully opaque to fully erase
             ctx.beginPath();
             ctx.arc(x, y, 40, 0, Math.PI * 2);
             ctx.fill();
-
-            checkReveal();
+            ctx.globalCompositeOperation = "source-over"; // Reset
         };
 
         const checkReveal = () => {
             if (isRevealed) return;
 
-            const imageData = ctx.getImageData(0, 0, width, height);
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             const data = imageData.data;
-            let cleared = 0;
-            const total = data.length / 4;
+            let transparentPixels = 0;
+            const totalPixels = data.length / 4;
 
-            for (let i = 0; i < total; i += 100) {
-                if (data[i * 4 + 3] === 0) cleared++;
+            // Sample every 100th pixel for performance
+            for (let i = 0; i < totalPixels; i += 100) {
+                const alpha = data[i * 4 + 3];
+                if (alpha < 128) { // Consider semi-transparent as scratched
+                    transparentPixels++;
+                }
             }
 
-            if (cleared / (total / 100) > 0.4) {
+            const scratchPercentage = (transparentPixels / (totalPixels / 100)) * 100;
+            console.log('Scratch %:', scratchPercentage.toFixed(2), 'Transparent:', transparentPixels, 'Total samples:', totalPixels / 100);
+
+            // Hide hint text and enable scrolling at 20%
+            if (scratchPercentage > 20) {
+                console.log('✅ 20% threshold reached - hiding text and enabling scroll');
+                setShowHintText(false);
+                setAllowScroll(true);
+            }
+
+            // Full reveal at 50%
+            if (scratchPercentage > 50) {
+                console.log('✅ 50% threshold reached - triggering full reveal');
                 triggerReveal();
             }
         };
@@ -103,37 +125,83 @@ export default function RevealOverlay({ onReveal, isRevealed: initialIsRevealed 
             }());
         };
 
-        canvas.addEventListener("mousedown", () => setIsDragging(true));
-        canvas.addEventListener("mouseup", () => setIsDragging(false));
-        canvas.addEventListener("mousemove", handleMove);
+        const handleMove = (e) => {
+            if (!isDragging.current) return;
 
-        canvas.addEventListener("touchstart", () => setIsDragging(true));
-        canvas.addEventListener("touchend", () => setIsDragging(false));
-        canvas.addEventListener("touchmove", handleMove);
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.clientX ?? e.touches?.[0]?.clientX;
+            const clientY = e.clientY ?? e.touches?.[0]?.clientY;
 
-        return () => {
-            if (canvas) {
-                canvas.removeEventListener("mousedown", () => setIsDragging(true));
-                canvas.removeEventListener("mouseup", () => setIsDragging(false));
-                canvas.removeEventListener("mousemove", handleMove);
-                // ... touch events
+            if (clientX === undefined || clientY === undefined) return;
+
+            const x = clientX - rect.left;
+            const y = clientY - rect.top;
+
+            scratch(x, y);
+            checkReveal();
+        };
+
+        const startDrag = (e) => {
+            isDragging.current = true;
+            // Also scratch at the initial point
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.clientX ?? e.touches?.[0]?.clientX;
+            const clientY = e.clientY ?? e.touches?.[0]?.clientY;
+
+            if (clientX !== undefined && clientY !== undefined) {
+                const x = clientX - rect.left;
+                const y = clientY - rect.top;
+                scratch(x, y);
+                checkReveal();
             }
         };
-    }, [isDragging, isRevealed, onReveal]);
+
+        const stopDrag = () => {
+            isDragging.current = false;
+        };
+
+        // Mouse events
+        canvas.addEventListener("mousedown", startDrag);
+        canvas.addEventListener("mouseup", stopDrag);
+        canvas.addEventListener("mousemove", handleMove);
+        canvas.addEventListener("mouseleave", stopDrag);
+
+        // Touch events
+        canvas.addEventListener("touchstart", startDrag, { passive: true });
+        canvas.addEventListener("touchend", stopDrag);
+        canvas.addEventListener("touchmove", handleMove, { passive: true });
+
+        return () => {
+            canvas.removeEventListener("mousedown", startDrag);
+            canvas.removeEventListener("mouseup", stopDrag);
+            canvas.removeEventListener("mousemove", handleMove);
+            canvas.removeEventListener("mouseleave", stopDrag);
+            canvas.removeEventListener("touchstart", startDrag);
+            canvas.removeEventListener("touchend", stopDrag);
+            canvas.removeEventListener("touchmove", handleMove);
+        };
+    }, [isRevealed, onReveal]);
 
     return (
         <AnimatePresence>
             {!isRevealed && (
                 <motion.div
+                    ref={containerRef}
                     initial={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.8 }}
-                    className="absolute inset-0 z-20 cursor-crosshair touch-none"
+                    className="absolute inset-0 z-20"
+                    style={{ touchAction: allowScroll ? 'auto' : 'none' }}
                 >
-                    <canvas ref={canvasRef} className="w-full h-full rounded-2xl" />
-                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none text-gray-500 font-bold uppercase tracking-widest text-sm animate-pulse">
-                        Scratch to Reveal
-                    </div>
+                    <canvas
+                        ref={canvasRef}
+                        className="w-full h-full rounded-2xl cursor-crosshair"
+                    />
+                    {showHintText && (
+                        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none text-gray-500 font-bold uppercase tracking-widest text-sm animate-pulse">
+                            Scratch to Reveal
+                        </div>
+                    )}
                 </motion.div>
             )}
         </AnimatePresence>

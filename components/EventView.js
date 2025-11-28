@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Gift, Clock, Users, Trash2, LogOut, Plus, X, Copy, Check, Sparkles as SparklesIcon, Eye } from "lucide-react";
@@ -42,12 +42,12 @@ export default function EventView({ initialEvent, user }) {
         }
     }, [event, user]);
 
-    const handleReveal = () => {
+    const handleReveal = useCallback(() => {
         setIsRevealed(true);
         // Save state
         const storageKey = `reveal_${event._id}_${user.userId}`;
         localStorage.setItem(storageKey, "true");
-    };
+    }, [event._id, user.userId]);
 
     // Poll for updates
     useEffect(() => {
@@ -209,7 +209,7 @@ export default function EventView({ initialEvent, user }) {
                                 <div className="relative min-h-[300px] rounded-2xl overflow-hidden bg-black/20 border border-white/5">
                                     <RevealOverlay isRevealed={isRevealed} onReveal={handleReveal} />
 
-                                    <div className="absolute inset-0 overflow-y-auto custom-scrollbar">
+                                    <div className={`absolute inset-0 overflow-y-auto custom-scrollbar ${isRevealed ? 'z-30' : 'z-0'}`}>
                                         <div className="min-h-full flex flex-col items-center justify-center p-8 text-center">
                                             <p className="text-gray-400 uppercase tracking-widest text-sm mb-4">You are gifting to</p>
                                             <h3 className="text-4xl md:text-5xl font-serif font-bold text-gold-gradient mb-8">
