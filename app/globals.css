@@ -78,9 +78,9 @@ body {
 
 /* Button Styles */
 .btn-primary {
-  background: var(--primary);
-  color: var(--background-secondary);
-  border: 2px solid var(--primary);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--foreground);
+  border: 0.5px solid var(--primary);
   padding: 0.75rem 1.5rem;
   border-radius: 0.75rem;
   font-weight: 700;
@@ -88,12 +88,14 @@ body {
   transition: all 0.3s ease;
   cursor: pointer;
   box-shadow: 0 4px 16px rgba(212, 175, 55, 0.3);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   position: relative;
   overflow: hidden;
 }
 
 .btn-primary:hover {
-  background: var(--primary-hover);
+  background: rgba(212, 175, 55, 0.15);
   border-color: var(--primary-hover);
   box-shadow: 0 6px 24px rgba(212, 175, 55, 0.5);
   transform: translateY(-2px);
