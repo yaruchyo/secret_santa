@@ -163,7 +163,7 @@ export default function HomeClient({ isLoggedIn }) {
                             <div>
                                 <h3 className="text-xl font-bold text-white mb-2">Draw Names</h3>
                                 <p className="text-gray-400 leading-relaxed">
-                                    Once everyone has joined, start the matching ceremony. Everyone receives their assignment via email or directly on the dashboard.
+                                    Once everyone time of prepearing wishlist is out system automaticly starts the matching ceremony. Everyone receives their assignment via event dashboard.
                                 </p>
                             </div>
                         </div>
