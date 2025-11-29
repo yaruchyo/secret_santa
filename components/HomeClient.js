@@ -9,20 +9,22 @@ import { ArrowRight, Gift, Sparkles, LayoutDashboard } from "lucide-react";
 
 export default function HomeClient({ isLoggedIn }) {
     return (
-        <main className="relative min-h-screen w-full overflow-hidden flex flex-col items-center justify-center text-center px-4">
+        <main className="relative min-h-screen w-full overflow-x-hidden flex flex-col items-center text-center px-4">
             {/* Background */}
-            <Aurora
-                colorStops={["#0a1f1c", "#1a2f2b", "#d4af37"]}
-                speed={0.5}
-                amplitude={1.2}
-            />
+            <div className="fixed inset-0 z-0">
+                <Aurora
+                    colorStops={["#0a1f1c", "#1a2f2b", "#d4af37"]}
+                    speed={0.5}
+                    amplitude={1.2}
+                />
+            </div>
 
             {/* Navigation */}
             <StaggeredMenu />
             <FloatingDock />
 
             {/* Hero Section */}
-            <div className="relative z-10 max-w-4xl mx-auto space-y-8">
+            <div className="relative z-10 max-w-4xl mx-auto space-y-8 min-h-screen flex flex-col justify-center">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -34,12 +36,12 @@ export default function HomeClient({ isLoggedIn }) {
                     </span>
 
                     <h1 className="text-5xl md:text-7xl lg:text-8xl font-serif font-bold tracking-tight text-white drop-shadow-lg">
-                        Start Your <br />
+                        Start Your Secret Santa <br />
                         <span className="text-gold-gradient italic">Tradition</span>
                     </h1>
 
                     <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto font-light leading-relaxed">
-                        Elevate your gift exchange with a sophisticated Secret Santa experience.
+                        The premium Secret Santa generator for your holiday gift exchanges.
                         Seamlessly organize, match, and celebrate with style.
                     </p>
                 </motion.div>
@@ -86,22 +88,88 @@ export default function HomeClient({ isLoggedIn }) {
                         </Link>
                     </motion.div>
                 )}
+
+                {/* Scroll Indicator */}
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 1.5, duration: 1 }}
+                    className="absolute bottom-12 left-0 right-0 flex justify-center"
+                >
+                    <div className="animate-bounce text-white/30">
+                        <ArrowRight className="rotate-90" size={24} />
+                    </div>
+                </motion.div>
             </div>
 
-            {/* Features / Social Proof (Subtle) */}
-            <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 1, delay: 0.5 }}
-                className="absolute bottom-12 left-0 right-0 flex justify-center gap-8 text-white/40 text-sm font-medium tracking-widest uppercase"
-            >
-                <div className="flex items-center gap-2">
-                    <Sparkles size={14} /> Premium Experience
-                </div>
-                <div className="flex items-center gap-2">
-                    <Gift size={14} /> Smart Matching
-                </div>
-            </motion.div>
+            {/* SEO Content Section */}
+            <article className="relative z-10 max-w-4xl mx-auto pb-24 space-y-24 text-left">
+                {/* Features */}
+                <section className="space-y-8">
+                    <h2 className="text-3xl md:text-4xl font-serif font-bold text-white text-center">
+                        Why Choose <span className="text-primary">Everyone Santa</span>?
+                    </h2>
+                    <div className="grid md:grid-cols-3 gap-8">
+                        <div className="bg-white/5 border border-white/10 p-6 rounded-2xl backdrop-blur-sm hover:bg-white/10 transition-colors">
+                            <Sparkles className="text-primary mb-4" size={32} />
+                            <h3 className="text-xl font-bold text-white mb-2">Smart Matching</h3>
+                            <p className="text-gray-400 leading-relaxed">
+                                Our advanced algorithm ensures fair and random assignments, preventing self-matches and handling exclusions effortlessly.
+                            </p>
+                        </div>
+                        <div className="bg-white/5 border border-white/10 p-6 rounded-2xl backdrop-blur-sm hover:bg-white/10 transition-colors">
+                            <Gift className="text-primary mb-4" size={32} />
+                            <h3 className="text-xl font-bold text-white mb-2">Wishlist Management</h3>
+                            <p className="text-gray-400 leading-relaxed">
+                                Create and share detailed wishlists. Participants can view their match's preferences without spoiling the surprise.
+                            </p>
+                        </div>
+                        <div className="bg-white/5 border border-white/10 p-6 rounded-2xl backdrop-blur-sm hover:bg-white/10 transition-colors">
+                            <LayoutDashboard className="text-primary mb-4" size={32} />
+                            <h3 className="text-xl font-bold text-white mb-2">Event Dashboard</h3>
+                            <p className="text-gray-400 leading-relaxed">
+                                Manage multiple events, track RSVPs, and communicate with participants all from a sleek, centralized dashboard.
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                {/* How It Works */}
+                <section className="space-y-8">
+                    <h2 className="text-3xl md:text-4xl font-serif font-bold text-white text-center">
+                        How to Organize a <span className="text-primary">Secret Santa</span>
+                    </h2>
+                    <div className="space-y-6">
+                        <div className="flex gap-6 items-start">
+                            <div className="flex-shrink-0 w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xl border border-primary/50">1</div>
+                            <div>
+                                <h3 className="text-xl font-bold text-white mb-2">Create Your Event</h3>
+                                <p className="text-gray-400 leading-relaxed">
+                                    Sign up and create a new event. Set the date, budget limit, and add a personal message for your guests.
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex gap-6 items-start">
+                            <div className="flex-shrink-0 w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xl border border-primary/50">2</div>
+                            <div>
+                                <h3 className="text-xl font-bold text-white mb-2">Invite Participants</h3>
+                                <p className="text-gray-400 leading-relaxed">
+                                    Share the unique invite link with your friends, family, or colleagues. They can join instantly and add their wishlists.
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex gap-6 items-start">
+                            <div className="flex-shrink-0 w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xl border border-primary/50">3</div>
+                            <div>
+                                <h3 className="text-xl font-bold text-white mb-2">Draw Names</h3>
+                                <p className="text-gray-400 leading-relaxed">
+                                    Once everyone has joined, start the matching ceremony. Everyone receives their assignment via email or directly on the dashboard.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </article>
         </main>
     );
 }

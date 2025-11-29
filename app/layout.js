@@ -55,14 +55,45 @@ const GA_TRACKING_ID = "G-V02C9MJH5S";
 export default function RootLayout({ children }) {
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "WebSite",
-    name: "Everyone Santa",
-    url: "https://www.everyonesanta.com",
-    potentialAction: {
-      "@type": "SearchAction",
-      target: "https://www.everyonesanta.com/search?q={search_term_string}",
-      "query-input": "required name=search_term_string",
-    },
+    "@graph": [
+      {
+        "@type": "WebSite",
+        name: "Everyone Santa",
+        url: "https://www.everyonesanta.com",
+        potentialAction: {
+          "@type": "SearchAction",
+          target: "https://www.everyonesanta.com/search?q={search_term_string}",
+          "query-input": "required name=search_term_string",
+        },
+      },
+      {
+        "@type": "Organization",
+        name: "Everyone Santa",
+        url: "https://www.everyonesanta.com",
+        logo: "https://www.everyonesanta.com/icon.png",
+        sameAs: [
+          "https://twitter.com/everyonesanta",
+          "https://facebook.com/everyonesanta",
+        ],
+      },
+      {
+        "@type": "SoftwareApplication",
+        name: "Everyone Santa",
+        applicationCategory: "LifestyleApplication",
+        operatingSystem: "Web",
+        offers: {
+          "@type": "Offer",
+          price: "0",
+          priceCurrency: "USD",
+        },
+        featureList: [
+          "Secret Santa Generator",
+          "Wishlist Management",
+          "Event Dashboard",
+          "Smart Matching Algorithm",
+        ],
+      },
+    ],
   };
 
   return (
