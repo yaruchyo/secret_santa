@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import GlassCard from "@/components/GlassCard";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 
 export default function JoinClient({ isLoggedIn }) {
     const [code, setCode] = useState("");
@@ -189,7 +189,7 @@ export default function JoinClient({ isLoggedIn }) {
                                 />
                             </div>
 
-                            <button type="submit" className="w-full bg-primary text-background-secondary font-bold py-3 rounded-xl hover:bg-primary-hover transition-all shadow-lg hover:shadow-primary/50 flex items-center justify-center gap-2 mt-6" disabled={loading}>
+                            <button type="submit" className="btn-primary w-full flex items-center justify-center gap-2 mt-6" disabled={loading}>
                                 {loading ? (
                                     <>
                                         <Loader2 size={20} className="animate-spin" />
@@ -231,6 +231,18 @@ export default function JoinClient({ isLoggedIn }) {
     // Default "Join" View
     return (
         <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-background">
+            {/* Back to Home Link - Only if not logged in */}
+            {!isLoggedIn && (
+                <div className="absolute top-6 left-6 z-20">
+                    <Link
+                        href="/"
+                        className="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-2 bg-black/20 px-4 py-2 rounded-full backdrop-blur-sm hover:bg-black/40 border border-white/5"
+                    >
+                        <ArrowLeft size={16} /> Back to home
+                    </Link>
+                </div>
+            )}
+
             <div className="absolute top-10 right-10 w-80 h-80 bg-primary/10 rounded-full blur-3xl animate-float"></div>
             <div className="absolute bottom-10 left-10 w-80 h-80 bg-accent/10 rounded-full blur-3xl animate-float" style={{ animationDelay: "1s" }}></div>
 
@@ -274,7 +286,7 @@ export default function JoinClient({ isLoggedIn }) {
                             </Link>
                             <button
                                 type="submit"
-                                className="flex-1 bg-primary text-background-secondary font-bold py-3 rounded-xl hover:bg-primary-hover transition-all shadow-lg hover:shadow-primary/50 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="btn-primary flex-1 flex items-center justify-center gap-2"
                                 disabled={loading || code.length < 6}
                             >
                                 {loading ? (

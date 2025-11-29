@@ -37,13 +37,28 @@ export default function LoginPage() {
                 router.push("/");
                 router.refresh();
             } else {
-                setIsLogin(true);
-                setError("");
-                setFormData({ email: formData.email, password: formData.password, name: "" });
-                // Show success message
-                setTimeout(() => {
-                    alert("Account created successfully! Please login.");
-                }, 100);
+                // Auto-login after signup
+                try {
+                    const loginRes = await fetch("/api/auth/login", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ email: formData.email, password: formData.password }),
+                    });
+
+                    if (loginRes.ok) {
+                        router.push("/");
+                        router.refresh();
+                    } else {
+                        // Fallback if auto-login fails
+                        setIsLogin(true);
+                        setError("");
+                        setFormData({ email: formData.email, password: formData.password, name: "" });
+                        alert("Account created! Please login.");
+                    }
+                } catch (loginErr) {
+                    console.error("Auto-login failed:", loginErr);
+                    setIsLogin(true);
+                }
             }
         } catch (err) {
             setError(err.message);

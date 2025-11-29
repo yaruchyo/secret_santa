@@ -77,36 +77,36 @@ export default function ProfileForm({ user }) {
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-                <div className="error-message">
+                <div className="bg-error/10 border border-error/20 text-error px-4 py-3 rounded-xl mb-6 text-sm flex items-center gap-2">
                     <span>⚠️</span>
                     <span>{error}</span>
                 </div>
             )}
             {success && (
-                <div className="success-message">
+                <div className="bg-green-500/10 border border-green-500/20 text-green-400 px-4 py-3 rounded-xl mb-6 text-sm flex items-center gap-2">
                     <span>✓</span>
                     <span>{success}</span>
                 </div>
             )}
 
             <div>
-                <label className="form-label">Name</label>
+                <label className="block text-xs uppercase tracking-widest text-gray-500 mb-1">Name</label>
                 <input
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="input w-full"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
                     required
                 />
             </div>
 
             <div>
-                <label className="form-label">Email</label>
+                <label className="block text-xs uppercase tracking-widest text-gray-500 mb-1">Email</label>
                 <input
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="input w-full"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
                     required
                 />
             </div>
@@ -115,23 +115,23 @@ export default function ProfileForm({ user }) {
                 <h3 className="text-lg font-semibold mb-4">Change Password</h3>
                 <div className="space-y-4">
                     <div>
-                        <label className="form-label">New Password (optional)</label>
+                        <label className="block text-xs uppercase tracking-widest text-gray-500 mb-1">New Password (optional)</label>
                         <input
                             type="password"
                             value={formData.password}
                             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                            className="input w-full"
+                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
                             placeholder="Leave blank to keep current password"
                         />
                     </div>
 
                     <div>
-                        <label className="form-label">Confirm New Password</label>
+                        <label className="block text-xs uppercase tracking-widest text-gray-500 mb-1">Confirm New Password</label>
                         <input
                             type="password"
                             value={formData.confirmPassword}
                             onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                            className="input w-full"
+                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
                             placeholder="Confirm new password"
                         />
                     </div>
@@ -142,7 +142,7 @@ export default function ProfileForm({ user }) {
                 <button
                     type="submit"
                     disabled={loading}
-                    className="btn btn-primary w-full"
+                    className="btn-primary w-full flex items-center justify-center gap-2"
                 >
                     {loading ? (
                         <span className="flex items-center gap-2">
