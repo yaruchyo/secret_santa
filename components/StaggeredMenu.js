@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 
 const allMenuItems = [
     { title: "Home", path: "/", hideWhenLoggedIn: true },
-    { title: "My Events", path: "/dashboard", requireAuth: true },
+    { title: "My Dashboard", path: "/dashboard", requireAuth: true },
     { title: "Create Event", path: "/create" },
     { title: "Join Event", path: "/join" },
     { title: "Profile", path: "/profile", requireAuth: true },

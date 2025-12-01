@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Calendar, Gift, Link as LinkIcon, Share2, Check, Lock, User, ExternalLink, Loader2, Plus, X, Trash2, Copy, Sparkles as SparklesIcon } from "lucide-react";
+import { Calendar, Gift, Link as LinkIcon, Share2, Check, Lock, User, ExternalLink, Loader2, Plus, X, Trash2, Copy, Sparkles as SparklesIcon, LogOut } from "lucide-react";
 import Aurora from "@/components/Aurora";
 import GlassCard from "@/components/GlassCard";
 import StaggeredMenu from "@/components/StaggeredMenu";
@@ -145,6 +145,25 @@ export default function WishlistView({ wishlist: initialWishlist, currentUser })
             }
         } catch (error) {
             console.error("Failed to delete wishlist", error);
+        }
+    };
+
+    const handleLeaveWishlist = async () => {
+        if (!confirm("Are you sure you want to leave this wishlist?")) return;
+
+        try {
+            const res = await fetch(`/api/wishlists/${wishlist._id}/leave`, {
+                method: "POST",
+            });
+
+            if (res.ok) {
+                router.push("/dashboard");
+                router.refresh();
+            } else {
+                alert("Failed to leave wishlist");
+            }
+        } catch (error) {
+            console.error("Failed to leave wishlist", error);
         }
     };
 
@@ -364,28 +383,45 @@ export default function WishlistView({ wishlist: initialWishlist, currentUser })
                         {/* Subscribers List */}
                         <GlassCard>
                             <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                                Subscribers <span className="bg-white/10 px-2 py-0.5 rounded-full text-xs">{wishlist.subscribers?.length || 0}</span>
+                                Subscribers <span className="bg-white/10 px-2 py-0.5 rounded-full text-xs">{wishlist.subscribersDetails?.length || 0}</span>
                             </h3>
-                            {/* We don't have subscriber names in the wishlist object yet, only IDs. 
-                                Ideally we should fetch them or populate them. 
-                                For now, let's just show count or placeholder if we can't get names easily without extra API call.
-                                Actually, the requirement didn't explicitly ask for subscriber list, but "Match Wishlist UI to Event UI".
-                                Event UI has participants list.
-                                Let's skip detailed list for now or just show "You" if subscribed.
-                            */}
-                            <div className="text-sm text-gray-400 italic">
-                                {wishlist.subscribers?.length > 0 ? `${wishlist.subscribers.length} people are following this wishlist.` : "No subscribers yet."}
-                            </div>
+                            {wishlist.subscribersDetails && wishlist.subscribersDetails.length > 0 ? (
+                                <ul className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                                    {wishlist.subscribersDetails.map((subscriber, i) => (
+                                        <li key={i} className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors">
+                                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center text-white font-bold">
+                                                {subscriber.name?.charAt(0)}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-medium truncate">{subscriber.name}</p>
+                                            </div>
+                                            {subscriber.isOwner && (
+                                                <span className="text-xs bg-purple-500/20 text-purple-400 px-2 py-1 rounded">Owner</span>
+                                            )}
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p className="text-sm text-gray-400 italic">No subscribers yet.</p>
+                            )}
                         </GlassCard>
 
                         {/* Admin / Actions */}
-                        {isOwner && (
+                        {isOwner ? (
                             <button
                                 onClick={handleDeleteWishlist}
                                 className="w-full py-4 rounded-xl border border-white/10 text-gray-400 hover:bg-error/10 hover:text-error hover:border-error/30 transition-all flex items-center justify-center gap-2"
                             >
                                 <Trash2 size={18} />
                                 Delete Wishlist
+                            </button>
+                        ) : isSubscriber && (
+                            <button
+                                onClick={handleLeaveWishlist}
+                                className="w-full py-4 rounded-xl border border-white/10 text-gray-400 hover:bg-error/10 hover:text-error hover:border-error/30 transition-all flex items-center justify-center gap-2"
+                            >
+                                <LogOut size={18} />
+                                Leave Wishlist
                             </button>
                         )}
                     </div>

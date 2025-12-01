@@ -8,7 +8,7 @@ import { useState, useEffect } from "react";
 
 const allDockItems = [
     { title: "Home", icon: Home, path: "/", hideWhenLoggedIn: true },
-    { title: "My Events", icon: Calendar, path: "/dashboard", requireAuth: true },
+    { title: "My Dashboard", icon: Calendar, path: "/dashboard", requireAuth: true },
     { title: "Create", icon: PlusCircle, path: "/create" },
     { title: "Join", icon: Gift, path: "/join" },
     { title: "Profile", icon: User, path: "/profile", requireAuth: true },

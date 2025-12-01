@@ -44,6 +44,28 @@ export async function GET(request, { params }) {
             // Let's return it.
         }
 
+        // Populate subscriber names (like EventView does with participants)
+        // Also include the owner in the list
+        const allUserIds = [wishlist.ownerId];
+        if (wishlist.subscribers && wishlist.subscribers.length > 0) {
+            allUserIds.push(...wishlist.subscribers);
+        }
+
+        // Remove duplicates (in case owner is also in subscribers)
+        const uniqueUserIds = [...new Set(allUserIds)].map(id => new ObjectId(id));
+        const users = await db.collection('users').find({ _id: { $in: uniqueUserIds } }).toArray();
+        const userMap = users.reduce((acc, u) => {
+            acc[u._id.toString()] = u;
+            return acc;
+        }, {});
+
+        wishlist.subscribersDetails = allUserIds.map(userId => ({
+            userId: userId,
+            name: userMap[userId]?.name || 'Unknown',
+            email: userMap[userId]?.email || 'Unknown',
+            isOwner: userId === wishlist.ownerId
+        }));
+
         return NextResponse.json(wishlist);
     } catch (error) {
         console.error("Error fetching wishlist:", error);

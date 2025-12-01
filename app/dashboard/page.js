@@ -64,11 +64,11 @@ export default function Dashboard() {
                 ) : (
                     <div className="space-y-12">
                         {/* Events Section */}
-                        <section>
-                            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-                                <Calendar className="text-primary" /> My Events
-                            </h2>
-                            {events.length > 0 ? (
+                        {events.length > 0 && (
+                            <section>
+                                <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+                                    <Calendar className="text-primary" /> My Dashboard
+                                </h2>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                     {events.map((event, index) => (
                                         <motion.div
@@ -106,17 +106,15 @@ export default function Dashboard() {
                                         </motion.div>
                                     ))}
                                 </div>
-                            ) : (
-                                <p className="text-gray-500 italic">No events yet.</p>
-                            )}
-                        </section>
+                            </section>
+                        )}
 
                         {/* Wishlists Section */}
-                        <section>
-                            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-                                <Gift className="text-purple-400" /> My Wishlists
-                            </h2>
-                            {wishlists.length > 0 ? (
+                        {wishlists.length > 0 && (
+                            <section>
+                                <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+                                    <Gift className="text-purple-400" /> My Wishlists
+                                </h2>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                     {wishlists.map((wishlist, index) => (
                                         <motion.div
@@ -158,10 +156,8 @@ export default function Dashboard() {
                                         </motion.div>
                                     ))}
                                 </div>
-                            ) : (
-                                <p className="text-gray-500 italic">No wishlists yet.</p>
-                            )}
-                        </section>
+                            </section>
+                        )}
                     </div>
                 )}
 
