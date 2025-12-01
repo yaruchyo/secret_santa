@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Calendar, Gift, Link as LinkIcon, Share2, Check, Lock, User, ExternalLink, Loader2, Plus, X, Trash2, Copy, Sparkles as SparklesIcon, LogOut } from "lucide-react";
+import { Calendar, Gift, Link as LinkIcon, Share2, Check, Lock, User, ExternalLink, Loader2, Plus, X, Trash2, Copy, Sparkles as SparklesIcon, LogOut, Clock } from "lucide-react";
 import Aurora from "@/components/Aurora";
 import GlassCard from "@/components/GlassCard";
 import StaggeredMenu from "@/components/StaggeredMenu";
@@ -17,6 +17,7 @@ export default function WishlistView({ wishlist: initialWishlist, currentUser })
     const [joining, setJoining] = useState(false);
     const [newItemName, setNewItemName] = useState("");
     const [newItemLink, setNewItemLink] = useState("");
+    const [timeLeft, setTimeLeft] = useState("");
 
     const isOwner = wishlist.ownerId === currentUser.userId;
     const isSubscriber = wishlist.subscribers && wishlist.subscribers.includes(currentUser.userId);
@@ -167,6 +168,29 @@ export default function WishlistView({ wishlist: initialWishlist, currentUser })
         }
     };
 
+    // Timer Logic (countdown to deadline)
+    useEffect(() => {
+        if (!wishlist) return;
+        const timer = setInterval(() => {
+            const now = new Date();
+            const deadline = new Date(wishlist.deadline);
+            const diff = deadline - now;
+
+            if (diff <= 0) {
+                setTimeLeft("Deadline passed!");
+                return;
+            }
+
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+            setTimeLeft(`${days}d ${hours}h ${minutes}m ${seconds}s`);
+        }, 1000);
+        return () => clearInterval(timer);
+    }, [wishlist]);
+
     if (!canView) {
         return (
             <div className="min-h-screen flex items-center justify-center relative overflow-hidden text-foreground">
@@ -238,6 +262,12 @@ export default function WishlistView({ wishlist: initialWishlist, currentUser })
                             <Calendar size={16} className="text-purple-400" />
                             <span>{new Date(wishlist.deadline).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
                         </div>
+                        {timeLeft && (
+                            <div className="flex items-center gap-2">
+                                <Clock size={16} className="text-purple-400" />
+                                <span className="font-mono font-bold">{timeLeft}</span>
+                            </div>
+                        )}
                         <div className="flex items-center gap-2">
                             <Gift size={16} className="text-purple-400" />
                             <span>{wishlist.items.length} Items</span>
