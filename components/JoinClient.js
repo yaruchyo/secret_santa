@@ -21,7 +21,7 @@ export default function JoinClient({ isLoggedIn }) {
         setLoading(true);
 
         try {
-            const res = await fetch("/api/events/join", {
+            const res = await fetch("/api/join", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ code: code.toUpperCase() }),
@@ -30,13 +30,19 @@ export default function JoinClient({ isLoggedIn }) {
             const data = await res.json();
 
             if (res.ok) {
-                router.push(`/event/${data.eventId}`);
+                if (data.type === 'event') {
+                    router.push(`/event/${data.id}`);
+                } else if (data.type === 'wishlist') {
+                    router.push(`/wishlist/${data.id}`);
+                } else {
+                    setError("Unknown resource type");
+                }
             } else if (res.status === 401) {
                 setShowAuth(true);
                 setAuthMode("signup"); // Default to signup for new users, but they can switch
-                setError("Please sign up or login to join this event");
+                setError("Please sign up or login to join");
             } else {
-                setError(data.error || "Failed to join event");
+                setError(data.error || "Failed to join");
             }
         } catch (err) {
             setError("An error occurred. Please try again.");
@@ -88,7 +94,7 @@ export default function JoinClient({ isLoggedIn }) {
 
             if (hasCode) {
                 // IF Code exists: Call Join API
-                const joinRes = await fetch("/api/events/join", {
+                const joinRes = await fetch("/api/join", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ code: code.toUpperCase() }),
@@ -97,11 +103,15 @@ export default function JoinClient({ isLoggedIn }) {
                 const joinData = await joinRes.json();
 
                 if (joinRes.ok) {
-                    router.push(`/event/${joinData.eventId}`);
+                    if (joinData.type === 'event') {
+                        router.push(`/event/${joinData.id}`);
+                    } else if (joinData.type === 'wishlist') {
+                        router.push(`/wishlist/${joinData.id}`);
+                    }
                     router.refresh();
                 } else {
                     // Account created/logged in, but join failed (e.g., full event or bad code)
-                    setError(joinData.error || "Authenticated, but failed to join event.");
+                    setError(joinData.error || "Authenticated, but failed to join.");
                     // We might want to close the auth modal here to let them try the code again,
                     // but keeping it open with the error is also fine so they know what happened.
                     // For better UX, let's close the auth modal so they see the main join screen with the error?
@@ -250,9 +260,9 @@ export default function JoinClient({ isLoggedIn }) {
                 <GlassCard className="w-full max-w-md animate-scale-in">
                     <div className="text-center mb-8">
                         <span className="text-5xl mb-4 inline-block animate-float">🎉</span>
-                        <h1 className="text-3xl font-serif font-bold mb-3 text-gold-gradient">Join an Event</h1>
+                        <h1 className="text-3xl font-serif font-bold mb-3 text-gold-gradient">Join Event or Wishlist</h1>
                         <p className="text-gray-400">
-                            Enter the invitation code shared by the event organizer
+                            Enter the invitation code shared by the organizer
                         </p>
                     </div>
 
@@ -295,7 +305,7 @@ export default function JoinClient({ isLoggedIn }) {
                                         Joining...
                                     </>
                                 ) : (
-                                    "🚀 Join Event"
+                                    "🚀 Join"
                                 )}
                             </button>
                         </div>
