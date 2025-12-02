@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Calendar, Gift, Link as LinkIcon, Share2, Check, Lock, User, ExternalLink, Loader2, Plus, X, Trash2, Copy, Sparkles as SparklesIcon, LogOut, Clock, Edit2, Save, AlertTriangle } from "lucide-react";
+import { Calendar, Gift, Link as LinkIcon, Share2, Check, Lock, User, ExternalLink, Loader2, Plus, X, Trash2, Copy, Sparkles as SparklesIcon, LogOut, Clock, Edit2, Save, AlertTriangle, Eye } from "lucide-react";
 import Aurora from "@/components/Aurora";
 import GlassCard from "@/components/GlassCard";
 import StaggeredMenu from "@/components/StaggeredMenu";
@@ -29,12 +29,16 @@ export default function WishlistView({ wishlist: initialWishlist, currentUser })
     const [copied, setCopied] = useState(false);
     const [confirmationModal, setConfirmationModal] = useState({ isOpen: false, type: null }); // type: 'delete' | 'leave'
     const [isProcessing, setIsProcessing] = useState(false);
+    const [subscribing, setSubscribing] = useState(false);
+    const [togglingPrivacy, setTogglingPrivacy] = useState(false);
 
     const isOwner = wishlist.ownerId === currentUser.userId;
     const isSubscriber = wishlist.subscribers && wishlist.subscribers.includes(currentUser.userId);
     const canView = isOwner || isSubscriber;
+    const isFriend = currentUser.friends && currentUser.friends.includes(wishlist.ownerId);
+    const isPublic = wishlist.isPublic !== undefined ? wishlist.isPublic : true; // Default to public for backward compatibility
 
-    const inviteUrl = typeof window !== 'undefined' ? `${window.location.origin}/invite/${wishlist.inviteId}` : '';
+    const [inviteUrl, setInviteUrl] = useState('');
 
     const handleCopyLink = () => {
         navigator.clipboard.writeText(inviteUrl);
@@ -64,6 +68,29 @@ export default function WishlistView({ wishlist: initialWishlist, currentUser })
             alert("An error occurred");
         } finally {
             setJoining(false);
+        }
+    };
+
+    const handleSubscribe = async () => {
+        setSubscribing(true);
+        try {
+            const res = await fetch(`/api/wishlists/${wishlist._id}/subscribe`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+            });
+
+            if (res.ok) {
+                router.refresh();
+                window.location.reload();
+            } else {
+                const data = await res.json();
+                alert(data.error || "Failed to subscribe");
+            }
+        } catch (error) {
+            console.error(error);
+            alert("An error occurred");
+        } finally {
+            setSubscribing(false);
         }
     };
 
@@ -203,6 +230,30 @@ export default function WishlistView({ wishlist: initialWishlist, currentUser })
         }
     };
 
+    const handleTogglePrivacy = async () => {
+        setTogglingPrivacy(true);
+        try {
+            const res = await fetch(`/api/wishlists/${wishlist._id}/privacy`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ isPublic: !isPublic }),
+            });
+
+            if (res.ok) {
+                router.refresh();
+                window.location.reload();
+            } else {
+                const data = await res.json();
+                alert(data.error || "Failed to update privacy");
+            }
+        } catch (error) {
+            console.error(error);
+            alert("An error occurred");
+        } finally {
+            setTogglingPrivacy(false);
+        }
+    };
+
     // Timer Logic (countdown to deadline)
     useEffect(() => {
         if (!wishlist) return;
@@ -226,7 +277,57 @@ export default function WishlistView({ wishlist: initialWishlist, currentUser })
         return () => clearInterval(timer);
     }, [wishlist]);
 
+    // Set invite URL on mount (client-side only to avoid hydration errors)
+    useEffect(() => {
+        setInviteUrl(`${window.location.origin}/invite/${wishlist.inviteId}`);
+    }, [wishlist.inviteId]);
+
     if (!canView) {
+        // If user is a friend AND wishlist is public, show subscribe button
+        if (isFriend && isPublic) {
+            return (
+                <div className="min-h-screen flex items-center justify-center relative overflow-hidden text-foreground">
+                    <Aurora colorStops={["#0a1f1c", "#1a2f2b", "#000000"]} amplitude={0.5} />
+                    <div className="relative z-10 max-w-md w-full p-4">
+                        <GlassCard className="p-8 text-center space-y-6">
+                            <div className="flex justify-center">
+                                <div className="w-16 h-16 rounded-full bg-purple-500/20 flex items-center justify-center">
+                                    <User size={32} className="text-purple-400" />
+                                </div>
+                            </div>
+                            <div>
+                                <h1 className="text-2xl font-bold mb-2">{wishlist.name}</h1>
+                                <p className="text-gray-400">
+                                    Friend's Wishlist
+                                </p>
+                            </div>
+                            <p className="text-sm text-gray-400">
+                                Subscribe to view this wishlist and book items for your friend.
+                            </p>
+                            <button
+                                onClick={handleSubscribe}
+                                disabled={subscribing}
+                                className="w-full bg-purple-600 text-white font-bold py-4 rounded-xl hover:bg-purple-700 transition-colors shadow-lg shadow-purple-900/20 flex items-center justify-center gap-2"
+                            >
+                                {subscribing ? (
+                                    <>
+                                        <Loader2 className="animate-spin" size={20} />
+                                        Subscribing...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Gift size={20} />
+                                        Subscribe to Wishlist
+                                    </>
+                                )}
+                            </button>
+                        </GlassCard>
+                    </div>
+                </div>
+            );
+        }
+
+        // Not a friend OR private wishlist - show code form
         return (
             <div className="min-h-screen flex items-center justify-center relative overflow-hidden text-foreground">
                 <Aurora colorStops={["#0a1f1c", "#1a2f2b", "#000000"]} amplitude={0.5} />
@@ -618,6 +719,55 @@ export default function WishlistView({ wishlist: initialWishlist, currentUser })
                                     )}
                                 </div>
                                 <p className="text-xs text-gray-500 mt-2">Share this link to invite friends</p>
+                            </GlassCard>
+                        )}
+
+                        {/* Privacy Settings */}
+                        {isOwner && (
+                            <GlassCard>
+                                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                                    {isPublic ? <Eye size={20} className="text-purple-400" /> : <Lock size={20} className="text-gray-400" />}
+                                    Privacy Settings
+                                </h3>
+                                <div className="space-y-3">
+                                    <div className="flex items-center justify-between p-3 bg-black/20 rounded-lg">
+                                        <div className="flex items-center gap-3">
+                                            {isPublic ? <Eye size={18} className="text-purple-400" /> : <Lock size={18} className="text-gray-400" />}
+                                            <div>
+                                                <p className="font-medium">{isPublic ? 'Public' : 'Private'}</p>
+                                                <p className="text-xs text-gray-400">
+                                                    {isPublic ? 'Friends can see and subscribe' : 'Invite link only'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={handleTogglePrivacy}
+                                        disabled={togglingPrivacy}
+                                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {togglingPrivacy ? (
+                                            <>
+                                                <Loader2 size={18} className="animate-spin" />
+                                                Updating...
+                                            </>
+                                        ) : (
+                                            <>
+                                                {isPublic ? (
+                                                    <>
+                                                        <Lock size={18} />
+                                                        Make Private
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Eye size={18} />
+                                                        Make Public
+                                                    </>
+                                                )}
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
                             </GlassCard>
                         )}
 

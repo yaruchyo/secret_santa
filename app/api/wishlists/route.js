@@ -34,7 +34,7 @@ export async function POST(request) {
     }
 
     try {
-        const { name, deadline, items } = await request.json();
+        const { name, deadline, items, isPublic } = await request.json();
 
         if (!name || !deadline) {
             return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
@@ -55,6 +55,7 @@ export async function POST(request) {
             items: items || [], // Array of { id, name, links: [], bookedBy: null, bookedByName: null }
             subscribers: [], // Array of userIds
             inviteId: crypto.randomUUID(),
+            isPublic: isPublic !== undefined ? isPublic : true, // Default to public
             createdAt: new Date(),
         };
 

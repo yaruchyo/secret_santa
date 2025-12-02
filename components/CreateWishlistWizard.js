@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Calendar, Type, Check, Loader2 } from "lucide-react";
+import { ArrowLeft, Calendar, Type, Check, Loader2, Eye, Lock } from "lucide-react";
 import Aurora from "@/components/Aurora";
 import Link from "next/link";
 
@@ -13,6 +13,7 @@ export default function CreateWishlistWizard({ isLoggedIn }) {
     const [formData, setFormData] = useState({
         name: "",
         deadline: "",
+        isPublic: true, // Default to public
     });
 
     const createWishlist = async () => {
@@ -24,7 +25,8 @@ export default function CreateWishlistWizard({ isLoggedIn }) {
             body: JSON.stringify({
                 name: formData.name,
                 deadline: isoDeadline,
-                items: [] // Initialize with empty items
+                items: [], // Initialize with empty items
+                isPublic: formData.isPublic
             }),
         });
 
@@ -92,6 +94,38 @@ export default function CreateWishlistWizard({ isLoggedIn }) {
                                         onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
                                         className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-xl focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none transition-all [color-scheme:dark]"
                                     />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm text-purple-400 uppercase tracking-widest font-bold mb-3">
+                                    Privacy
+                                </label>
+                                <div className="flex gap-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData({ ...formData, isPublic: true })}
+                                        className={`flex-1 p-4 rounded-xl border-2 transition-all ${formData.isPublic
+                                                ? 'bg-purple-600/20 border-purple-500 text-white'
+                                                : 'bg-white/5 border-white/10 text-gray-400 hover:border-white/20'
+                                            }`}
+                                    >
+                                        <Eye className="mx-auto mb-2" size={24} />
+                                        <div className="text-sm font-bold">Public</div>
+                                        <div className="text-xs mt-1">Friends can see and subscribe</div>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData({ ...formData, isPublic: false })}
+                                        className={`flex-1 p-4 rounded-xl border-2 transition-all ${!formData.isPublic
+                                                ? 'bg-purple-600/20 border-purple-500 text-white'
+                                                : 'bg-white/5 border-white/10 text-gray-400 hover:border-white/20'
+                                            }`}
+                                    >
+                                        <Lock className="mx-auto mb-2" size={24} />
+                                        <div className="text-sm font-bold">Private</div>
+                                        <div className="text-xs mt-1">Invite link only</div>
+                                    </button>
                                 </div>
                             </div>
                         </div>

@@ -78,5 +78,14 @@ export default async function Page({ params }) {
         );
     }
 
-    return <WishlistView wishlist={wishlist} currentUser={user} />;
+    // Fetch user's friends array
+    const client = await clientPromise;
+    const db = client.db(process.env.MONGO_DB_NAME);
+    const currentUserData = await db.collection('users').findOne({ _id: new ObjectId(user.userId) });
+    const userWithFriends = {
+        ...user,
+        friends: currentUserData?.friends || []
+    };
+
+    return <WishlistView wishlist={wishlist} currentUser={userWithFriends} />;
 }
