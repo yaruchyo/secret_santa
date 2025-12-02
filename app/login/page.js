@@ -1,17 +1,19 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import GlassCard from "@/components/GlassCard";
 import { Gift, ArrowLeft, Loader2 } from "lucide-react";
 
-export default function LoginPage() {
+function LoginForm() {
     const [isLogin, setIsLogin] = useState(true);
     const [formData, setFormData] = useState({ email: "", password: "", name: "" });
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const callbackUrl = searchParams.get("callbackUrl") || "/";
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -34,7 +36,7 @@ export default function LoginPage() {
             }
 
             if (isLogin) {
-                router.push("/");
+                router.push(callbackUrl);
                 router.refresh();
             } else {
                 // Auto-login after signup
@@ -46,7 +48,7 @@ export default function LoginPage() {
                     });
 
                     if (loginRes.ok) {
-                        router.push("/");
+                        router.push(callbackUrl);
                         router.refresh();
                     } else {
                         // Fallback if auto-login fails
@@ -188,5 +190,13 @@ export default function LoginPage() {
                 </Link>
             </div>
         </div>
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-white">Loading...</div>}>
+            <LoginForm />
+        </Suspense>
     );
 }
