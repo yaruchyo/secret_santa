@@ -54,6 +54,7 @@ export async function POST(request) {
             code,
             items: items || [], // Array of { id, name, links: [], bookedBy: null, bookedByName: null }
             subscribers: [], // Array of userIds
+            inviteId: crypto.randomUUID(),
             createdAt: new Date(),
         };
 

@@ -50,6 +50,7 @@ export async function POST(request) {
             code,
             participants: [{ userId: user.userId, wishlist: [] }], // Owner auto-joins
             status: 'active', // active, matched
+            inviteId: crypto.randomUUID(),
             createdAt: new Date(),
         };
 

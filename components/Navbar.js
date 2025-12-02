@@ -28,9 +28,7 @@ export default function Navbar({ user }) {
                         </div>
                         <span className="text-sm font-medium group-hover:text-white transition-colors">{user?.name}</span>
                     </Link>
-                    <Link href="/join" className="btn btn-secondary text-sm">
-                        <span>🎉</span> Join Event
-                    </Link>
+
                     <Link href="/create" className="btn btn-primary text-sm">
                         <span>✨</span> New Event
                     </Link>
@@ -46,7 +44,7 @@ export default function Navbar({ user }) {
                         items={[
                             { label: 'Home', link: '/' },
                             { label: 'New Event', link: '/create' },
-                            { label: 'Join Event', link: '/join' },
+
                             { label: 'Profile', link: '/profile' },
                             { label: 'Logout', link: '#', onClick: (e) => { e.preventDefault(); handleLogout(); } }
                         ]}

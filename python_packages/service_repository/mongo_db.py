@@ -7,6 +7,8 @@ import os
 load_dotenv()
 
 
+import certifi
+
 class MongoDB:
 
     def __init__(self, db_name: str, MONGO_DB_USER: str, MONGO_DB_PASS: str, MONGO_DB_REST_URL: str):
@@ -17,7 +19,7 @@ class MongoDB:
         """
         uri = f"mongodb+srv://{MONGO_DB_USER}:{MONGO_DB_PASS}{MONGO_DB_REST_URL}"
         #uri = "mongodb+srv://<db_username>:<db_password>@main.cue9bbq.mongodb.net/?appName=main"
-        self.client = MongoClient(uri, server_api=ServerApi('1'))
+        self.client = MongoClient(uri, server_api=ServerApi('1'), tlsCAFile=certifi.where())
 
         # Check connection
         try:

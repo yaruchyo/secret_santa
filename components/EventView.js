@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Gift, Clock, Users, Trash2, LogOut, Plus, X, Copy, Check, Sparkles as SparklesIcon, Eye } from "lucide-react";
+import { Gift, Clock, Users, Trash2, LogOut, Plus, X, Copy, Check, Sparkles as SparklesIcon, Eye, AlertTriangle, Loader2 } from "lucide-react";
 import StaggeredMenu from "@/components/StaggeredMenu";
 import FloatingDock from "@/components/FloatingDock";
 import GlassCard from "@/components/GlassCard";
@@ -17,6 +17,8 @@ export default function EventView({ initialEvent, user }) {
     const [joinCode, setJoinCode] = useState("");
     const [timeLeft, setTimeLeft] = useState("");
     const [isRevealed, setIsRevealed] = useState(false);
+    const [confirmationModal, setConfirmationModal] = useState({ isOpen: false, type: null });
+    const [isProcessing, setIsProcessing] = useState(false);
     const router = useRouter();
 
     const isOwner = event.ownerId === user.userId;
@@ -127,22 +129,44 @@ export default function EventView({ initialEvent, user }) {
         });
     };
 
-    const handleLeaveEvent = async () => {
-        const confirmMessage = isOwner
-            ? "Are you sure you want to delete this event? This action cannot be undone."
-            : "Are you sure you want to leave this event?";
+    const handleConfirmAction = async () => {
+        setIsProcessing(true);
+        try {
+            if (confirmationModal.type === 'delete') {
+                // Assuming delete endpoint exists or using leave for owner?
+                // The original code had handleLeaveEvent for both.
+                // If owner, it might be a delete.
+                // Let's check the API. Usually owner deletes.
+                // For now, I'll use the same endpoint logic but adapted.
+                // Actually, the original code used /api/events/${event._id}/leave for both owner and participant?
+                // "const res = await fetch(`/api/events/${event._id}/leave`, { method: "POST" });"
+                // If so, I'll keep using that.
 
-        if (!confirm(confirmMessage)) return;
-
-        const res = await fetch(`/api/events/${event._id}/leave`, {
-            method: "POST",
-        });
-
-        if (res.ok) {
-            router.push("/dashboard");
-            router.refresh();
-        } else {
-            alert("Failed to leave event");
+                const res = await fetch(`/api/events/${event._id}/leave`, {
+                    method: "POST",
+                });
+                if (res.ok) {
+                    router.push("/dashboard");
+                    router.refresh();
+                } else {
+                    alert("Failed to delete event");
+                }
+            } else if (confirmationModal.type === 'leave') {
+                const res = await fetch(`/api/events/${event._id}/leave`, {
+                    method: "POST",
+                });
+                if (res.ok) {
+                    router.push("/dashboard");
+                    router.refresh();
+                } else {
+                    alert("Failed to leave event");
+                }
+            }
+        } catch (error) {
+            console.error(`Failed to ${confirmationModal.type} event`, error);
+        } finally {
+            setIsProcessing(false);
+            setConfirmationModal({ isOpen: false, type: null });
         }
     };
 
@@ -153,6 +177,53 @@ export default function EventView({ initialEvent, user }) {
     return (
         <div className="min-h-screen pb-24 relative overflow-hidden text-foreground">
             <Aurora colorStops={["#0a1f1c", "#1a2f2b", "#000000"]} amplitude={0.8} />
+
+            {/* Custom Confirmation Modal */}
+            <AnimatePresence>
+                {confirmationModal.isOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            className="w-full max-w-md"
+                        >
+                            <GlassCard className="border-red-500/30 shadow-2xl shadow-red-900/20">
+                                <div className="flex flex-col items-center text-center p-4">
+                                    <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mb-4">
+                                        <AlertTriangle size={32} className="text-red-500" />
+                                    </div>
+                                    <h3 className="text-2xl font-bold text-white mb-2">
+                                        {confirmationModal.type === 'delete' ? 'Delete Event?' : 'Leave Event?'}
+                                    </h3>
+                                    <p className="text-gray-300 mb-8">
+                                        {confirmationModal.type === 'delete'
+                                            ? <span>Are you sure you want to delete <span className="font-bold text-white">"{event.name}"</span>? This action cannot be undone.</span>
+                                            : <span>Are you sure you want to leave <span className="font-bold text-white">"{event.name}"</span>? You will need an invite to rejoin.</span>
+                                        }
+                                    </p>
+
+                                    <div className="flex w-full gap-4">
+                                        <button
+                                            onClick={() => setConfirmationModal({ isOpen: false, type: null })}
+                                            className="flex-1 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white font-medium transition-colors"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            onClick={handleConfirmAction}
+                                            disabled={isProcessing}
+                                            className="flex-1 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold transition-colors flex items-center justify-center gap-2"
+                                        >
+                                            {isProcessing ? <Loader2 className="animate-spin" /> : (confirmationModal.type === 'delete' ? 'Delete' : 'Leave')}
+                                        </button>
+                                    </div>
+                                </div>
+                            </GlassCard>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
 
             <StaggeredMenu />
             <FloatingDock />
@@ -270,7 +341,7 @@ export default function EventView({ initialEvent, user }) {
                                                 <span className="flex-1 text-gray-200">{item}</span>
                                                 <button
                                                     onClick={() => handleRemoveWishItem(index)}
-                                                    className="text-gray-500 hover:text-error transition-colors"
+                                                    className="text-gray-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all p-2"
                                                 >
                                                     <X size={18} />
                                                 </button>
@@ -361,11 +432,11 @@ export default function EventView({ initialEvent, user }) {
                         {/* Admin / Actions */}
                         {isParticipant && (
                             <button
-                                onClick={handleLeaveEvent}
-                                className="w-full py-4 rounded-xl border border-white/10 text-gray-400 hover:bg-error/10 hover:text-error hover:border-error/30 transition-all flex items-center justify-center gap-2"
+                                onClick={() => setConfirmationModal({ isOpen: true, type: isOwner ? 'delete' : 'leave' })}
+                                className="w-full py-4 rounded-xl border border-white/10 text-gray-400 hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/30 transition-all flex items-center justify-center gap-2 group"
                             >
-                                {isOwner ? <Trash2 size={18} /> : <LogOut size={18} />}
-                                {isOwner ? "Delete Event" : "Leave Event"}
+                                {isOwner ? <Trash2 size={18} className="group-hover:text-red-500 transition-colors" /> : <LogOut size={18} className="group-hover:text-red-500 transition-colors" />}
+                                <span className="group-hover:text-red-500 transition-colors">{isOwner ? "Delete Event" : "Leave Event"}</span>
                             </button>
                         )}
                     </div>

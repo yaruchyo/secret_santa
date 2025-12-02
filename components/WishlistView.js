@@ -2,30 +2,44 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Calendar, Gift, Link as LinkIcon, Share2, Check, Lock, User, ExternalLink, Loader2, Plus, X, Trash2, Copy, Sparkles as SparklesIcon, LogOut, Clock } from "lucide-react";
+import { Calendar, Gift, Link as LinkIcon, Share2, Check, Lock, User, ExternalLink, Loader2, Plus, X, Trash2, Copy, Sparkles as SparklesIcon, LogOut, Clock, Edit2, Save, AlertTriangle } from "lucide-react";
 import Aurora from "@/components/Aurora";
 import GlassCard from "@/components/GlassCard";
 import StaggeredMenu from "@/components/StaggeredMenu";
 import FloatingDock from "@/components/FloatingDock";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import FriendProfile from "@/components/FriendProfile"; // Keep if needed, though we switched to dashboard link
 
 export default function WishlistView({ wishlist: initialWishlist, currentUser }) {
     const router = useRouter();
     const [wishlist, setWishlist] = useState(initialWishlist);
     const [joinCode, setJoinCode] = useState("");
     const [joining, setJoining] = useState(false);
-    const [newItemName, setNewItemName] = useState("");
-    const [newItemLink, setNewItemLink] = useState("");
     const [timeLeft, setTimeLeft] = useState("");
+
+    // Add Item State
+    const [newItemName, setNewItemName] = useState("");
+    const [newItemLinks, setNewItemLinks] = useState([""]);
+
+    // Edit Item State
+    const [editingItem, setEditingItem] = useState(null); // { id, name, links }
+
+    // UI States
+    const [copied, setCopied] = useState(false);
+    const [confirmationModal, setConfirmationModal] = useState({ isOpen: false, type: null }); // type: 'delete' | 'leave'
+    const [isProcessing, setIsProcessing] = useState(false);
 
     const isOwner = wishlist.ownerId === currentUser.userId;
     const isSubscriber = wishlist.subscribers && wishlist.subscribers.includes(currentUser.userId);
     const canView = isOwner || isSubscriber;
 
-    const handleCopyCode = () => {
-        navigator.clipboard.writeText(wishlist.code);
-        alert("Code copied to clipboard!");
+    const inviteUrl = typeof window !== 'undefined' ? `${window.location.origin}/invite/${wishlist.inviteId}` : '';
+
+    const handleCopyLink = () => {
+        navigator.clipboard.writeText(inviteUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
     };
 
     const handleJoin = async (e) => {
@@ -91,10 +105,12 @@ export default function WishlistView({ wishlist: initialWishlist, currentUser })
     const handleAddItem = async () => {
         if (!newItemName.trim()) return;
 
+        const validLinks = newItemLinks.filter(l => l.trim() !== "");
+
         const newItem = {
             id: crypto.randomUUID(),
             name: newItemName,
-            links: newItemLink ? [newItemLink] : [],
+            links: validLinks,
             bookedBy: null,
             bookedByName: null
         };
@@ -102,7 +118,7 @@ export default function WishlistView({ wishlist: initialWishlist, currentUser })
         const updatedItems = [...wishlist.items, newItem];
         setWishlist({ ...wishlist, items: updatedItems });
         setNewItemName("");
-        setNewItemLink("");
+        setNewItemLinks([""]);
 
         try {
             await fetch(`/api/wishlists/${wishlist._id}`, {
@@ -115,7 +131,32 @@ export default function WishlistView({ wishlist: initialWishlist, currentUser })
         }
     };
 
+    const handleUpdateItem = async () => {
+        if (!editingItem || !editingItem.name.trim()) return;
+
+        const validLinks = editingItem.links.filter(l => l.trim() !== "");
+        const updatedItem = { ...editingItem, links: validLinks };
+
+        const updatedItems = wishlist.items.map(item =>
+            item.id === updatedItem.id ? { ...item, ...updatedItem } : item
+        );
+
+        setWishlist({ ...wishlist, items: updatedItems });
+        setEditingItem(null);
+
+        try {
+            await fetch(`/api/wishlists/${wishlist._id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ items: updatedItems }),
+            });
+        } catch (error) {
+            console.error("Failed to update item", error);
+        }
+    };
+
     const handleRemoveItem = async (itemId) => {
+        if (!confirm("Are you sure you want to remove this item?")) return;
         const updatedItems = wishlist.items.filter(i => i.id !== itemId);
         setWishlist({ ...wishlist, items: updatedItems });
 
@@ -130,41 +171,35 @@ export default function WishlistView({ wishlist: initialWishlist, currentUser })
         }
     };
 
-    const handleDeleteWishlist = async () => {
-        if (!confirm("Are you sure you want to delete this wishlist? This action cannot be undone.")) return;
-
+    const handleConfirmAction = async () => {
+        setIsProcessing(true);
         try {
-            const res = await fetch(`/api/wishlists/${wishlist._id}`, {
-                method: "DELETE",
-            });
-
-            if (res.ok) {
-                router.push("/dashboard");
-                router.refresh();
-            } else {
-                alert("Failed to delete wishlist");
+            if (confirmationModal.type === 'delete') {
+                const res = await fetch(`/api/wishlists/${wishlist._id}`, {
+                    method: "DELETE",
+                });
+                if (res.ok) {
+                    router.push("/dashboard");
+                    router.refresh();
+                } else {
+                    alert("Failed to delete wishlist");
+                }
+            } else if (confirmationModal.type === 'leave') {
+                const res = await fetch(`/api/wishlists/${wishlist._id}/leave`, {
+                    method: "POST",
+                });
+                if (res.ok) {
+                    router.push("/dashboard");
+                    router.refresh();
+                } else {
+                    alert("Failed to leave wishlist");
+                }
             }
         } catch (error) {
-            console.error("Failed to delete wishlist", error);
-        }
-    };
-
-    const handleLeaveWishlist = async () => {
-        if (!confirm("Are you sure you want to leave this wishlist?")) return;
-
-        try {
-            const res = await fetch(`/api/wishlists/${wishlist._id}/leave`, {
-                method: "POST",
-            });
-
-            if (res.ok) {
-                router.push("/dashboard");
-                router.refresh();
-            } else {
-                alert("Failed to leave wishlist");
-            }
-        } catch (error) {
-            console.error("Failed to leave wishlist", error);
+            console.error(`Failed to ${confirmationModal.type} wishlist`, error);
+        } finally {
+            setIsProcessing(false);
+            setConfirmationModal({ isOpen: false, type: null });
         }
     };
 
@@ -230,6 +265,53 @@ export default function WishlistView({ wishlist: initialWishlist, currentUser })
         <div className="min-h-screen pb-24 relative overflow-hidden text-foreground">
             <Aurora colorStops={["#1a0b2e", "#000000", "#2d1b4e"]} amplitude={0.5} />
 
+            {/* Custom Confirmation Modal */}
+            <AnimatePresence>
+                {confirmationModal.isOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            className="w-full max-w-md"
+                        >
+                            <GlassCard className="border-red-500/30 shadow-2xl shadow-red-900/20">
+                                <div className="flex flex-col items-center text-center p-4">
+                                    <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mb-4">
+                                        <AlertTriangle size={32} className="text-red-500" />
+                                    </div>
+                                    <h3 className="text-2xl font-bold text-white mb-2">
+                                        {confirmationModal.type === 'delete' ? 'Delete Wishlist?' : 'Leave Wishlist?'}
+                                    </h3>
+                                    <p className="text-gray-300 mb-8">
+                                        {confirmationModal.type === 'delete'
+                                            ? <span>Are you sure you want to delete <span className="font-bold text-white">"{wishlist.name}"</span>? This action cannot be undone.</span>
+                                            : <span>Are you sure you want to leave <span className="font-bold text-white">"{wishlist.name}"</span>? You will need an invite to rejoin.</span>
+                                        }
+                                    </p>
+
+                                    <div className="flex w-full gap-4">
+                                        <button
+                                            onClick={() => setConfirmationModal({ isOpen: false, type: null })}
+                                            className="flex-1 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white font-medium transition-colors"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            onClick={handleConfirmAction}
+                                            disabled={isProcessing}
+                                            className="flex-1 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold transition-colors flex items-center justify-center gap-2"
+                                        >
+                                            {isProcessing ? <Loader2 className="animate-spin" /> : (confirmationModal.type === 'delete' ? 'Delete' : 'Leave')}
+                                        </button>
+                                    </div>
+                                </div>
+                            </GlassCard>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
             <StaggeredMenu />
             <FloatingDock />
 
@@ -290,6 +372,74 @@ export default function WishlistView({ wishlist: initialWishlist, currentUser })
                                     {wishlist.items.map((item, index) => {
                                         const isBooked = !!item.bookedBy;
                                         const bookedByMe = item.bookedBy === currentUser.userId;
+                                        const isEditing = editingItem && editingItem.id === item.id;
+
+                                        if (isEditing) {
+                                            return (
+                                                <motion.div
+                                                    key={item.id}
+                                                    initial={{ opacity: 0 }}
+                                                    animate={{ opacity: 1 }}
+                                                    className="flex flex-col gap-3 bg-white/10 p-4 rounded-xl border border-purple-500/50"
+                                                >
+                                                    <input
+                                                        type="text"
+                                                        value={editingItem.name}
+                                                        onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })}
+                                                        className="w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-white focus:border-purple-500 outline-none"
+                                                        placeholder="Item Name"
+                                                    />
+                                                    <div className="space-y-2">
+                                                        {editingItem.links.map((link, i) => (
+                                                            <div key={i} className="flex gap-2">
+                                                                <input
+                                                                    type="text"
+                                                                    value={link}
+                                                                    onChange={(e) => {
+                                                                        const newLinks = [...editingItem.links];
+                                                                        newLinks[i] = e.target.value;
+                                                                        setEditingItem({ ...editingItem, links: newLinks });
+                                                                    }}
+                                                                    className="flex-1 bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-purple-500 outline-none"
+                                                                    placeholder="Link URL"
+                                                                />
+                                                                {editingItem.links.length > 1 && (
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            const newLinks = editingItem.links.filter((_, idx) => idx !== i);
+                                                                            setEditingItem({ ...editingItem, links: newLinks });
+                                                                        }}
+                                                                        className="text-red-400 hover:text-red-300 p-2"
+                                                                    >
+                                                                        <X size={16} />
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        ))}
+                                                        <button
+                                                            onClick={() => setEditingItem({ ...editingItem, links: [...editingItem.links, ""] })}
+                                                            className="text-xs text-purple-400 hover:text-purple-300 flex items-center gap-1"
+                                                        >
+                                                            <Plus size={12} /> Add Link
+                                                        </button>
+                                                    </div>
+                                                    <div className="flex justify-end gap-2 mt-2">
+                                                        <button
+                                                            onClick={() => setEditingItem(null)}
+                                                            className="px-3 py-1 text-gray-400 hover:text-white text-sm"
+                                                        >
+                                                            Cancel
+                                                        </button>
+                                                        <button
+                                                            onClick={handleUpdateItem}
+                                                            className="px-3 py-1 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm flex items-center gap-1"
+                                                        >
+                                                            <Save size={14} /> Save
+                                                        </button>
+                                                    </div>
+                                                </motion.div>
+                                            );
+                                        }
 
                                         return (
                                             <motion.div
@@ -321,12 +471,20 @@ export default function WishlistView({ wishlist: initialWishlist, currentUser })
                                                     </div>
 
                                                     {isOwner && (
-                                                        <button
-                                                            onClick={() => handleRemoveItem(item.id)}
-                                                            className="text-gray-500 hover:text-error transition-colors p-2"
-                                                        >
-                                                            <X size={18} />
-                                                        </button>
+                                                        <div className="flex items-center gap-1">
+                                                            <button
+                                                                onClick={() => setEditingItem({ ...item, links: item.links && item.links.length > 0 ? item.links : [""] })}
+                                                                className="text-gray-500 hover:text-purple-400 transition-colors p-2"
+                                                            >
+                                                                <Edit2 size={18} />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleRemoveItem(item.id)}
+                                                                className="text-gray-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all p-2"
+                                                            >
+                                                                <Trash2 size={18} />
+                                                            </button>
+                                                        </div>
                                                     )}
 
                                                     {!isOwner && (
@@ -371,23 +529,50 @@ export default function WishlistView({ wishlist: initialWishlist, currentUser })
                                         placeholder="Add a wish..."
                                         className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none transition-all"
                                     />
-                                    <div className="flex gap-2">
-                                        <input
-                                            type="text"
-                                            value={newItemLink}
-                                            onChange={(e) => setNewItemLink(e.target.value)}
-                                            onKeyPress={(e) => e.key === "Enter" && handleAddItem()}
-                                            placeholder="Add a link (optional)..."
-                                            className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none transition-all"
-                                        />
+
+                                    <div className="space-y-2">
+                                        {newItemLinks.map((link, i) => (
+                                            <div key={i} className="flex gap-2">
+                                                <input
+                                                    type="text"
+                                                    value={link}
+                                                    onChange={(e) => {
+                                                        const newLinks = [...newItemLinks];
+                                                        newLinks[i] = e.target.value;
+                                                        setNewItemLinks(newLinks);
+                                                    }}
+                                                    onKeyPress={(e) => e.key === "Enter" && handleAddItem()}
+                                                    placeholder="Add a link (optional)..."
+                                                    className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none transition-all"
+                                                />
+                                                {newItemLinks.length > 1 && (
+                                                    <button
+                                                        onClick={() => {
+                                                            const newLinks = newItemLinks.filter((_, idx) => idx !== i);
+                                                            setNewItemLinks(newLinks);
+                                                        }}
+                                                        className="text-red-400 hover:text-red-300 p-2"
+                                                    >
+                                                        <X size={16} />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        ))}
                                         <button
-                                            onClick={handleAddItem}
-                                            disabled={!newItemName.trim()}
-                                            className="bg-purple-600 text-white p-3 rounded-xl hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                            onClick={() => setNewItemLinks([...newItemLinks, ""])}
+                                            className="text-xs text-purple-400 hover:text-purple-300 flex items-center gap-1 ml-1"
                                         >
-                                            <Plus size={24} />
+                                            <Plus size={12} /> Add another link
                                         </button>
                                     </div>
+
+                                    <button
+                                        onClick={handleAddItem}
+                                        disabled={!newItemName.trim()}
+                                        className="bg-purple-600 text-white p-3 rounded-xl hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-2 flex items-center justify-center gap-2"
+                                    >
+                                        <Plus size={20} /> Add Item
+                                    </button>
                                 </div>
                             )}
                         </GlassCard>
@@ -395,18 +580,44 @@ export default function WishlistView({ wishlist: initialWishlist, currentUser })
 
                     {/* Sidebar - Right Column */}
                     <div className="space-y-6">
-                        {/* Invitation Code */}
+                        {/* Invitation Link */}
                         {isOwner && (
-                            <GlassCard className="bg-gradient-to-br from-purple-500/10 to-transparent border-purple-500/20">
-                                <p className="text-xs text-purple-400 uppercase tracking-widest font-bold mb-2">Invitation Code</p>
-                                <div
-                                    onClick={handleCopyCode}
-                                    className="flex items-center justify-between bg-black/20 p-4 rounded-xl cursor-pointer hover:bg-black/30 transition-colors group"
-                                >
-                                    <span className="text-3xl font-mono font-bold text-white tracking-wider">{wishlist.code}</span>
-                                    <Copy size={20} className="text-gray-500 group-hover:text-white transition-colors" />
+                            <GlassCard className={`transition-all duration-300 ${copied ? 'border-purple-500 shadow-[0_0_30px_rgba(168,85,247,0.3)]' : 'border-purple-500/20'}`}>
+                                <div className="flex items-center justify-between mb-2">
+                                    <p className="text-xs text-purple-400 uppercase tracking-widest font-bold">Invitation Link</p>
+                                    {copied && (
+                                        <motion.span
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            className="text-xs text-green-400 font-bold flex items-center gap-1"
+                                        >
+                                            <Check size={12} /> Copied!
+                                        </motion.span>
+                                    )}
                                 </div>
-                                <p className="text-xs text-gray-500 mt-2">Click to copy & share with friends</p>
+                                <div
+                                    onClick={handleCopyLink}
+                                    className="flex items-center justify-between bg-black/40 p-3 rounded-xl cursor-pointer hover:bg-black/50 transition-colors group border border-white/5 relative overflow-hidden"
+                                >
+                                    <div className="flex items-center gap-3 overflow-hidden w-full">
+                                        <LinkIcon size={16} className={`flex-shrink-0 ${copied ? 'text-green-400' : 'text-purple-400'}`} />
+                                        <span className="text-sm text-gray-300 truncate font-mono">{inviteUrl}</span>
+                                    </div>
+                                    <div className="pl-3 border-l border-white/10 ml-2">
+                                        <Copy size={18} className="text-gray-500 group-hover:text-white transition-colors flex-shrink-0" />
+                                    </div>
+
+                                    {/* Glowing Click Effect */}
+                                    {copied && (
+                                        <motion.div
+                                            initial={{ opacity: 0.5, scale: 0.8 }}
+                                            animate={{ opacity: 0, scale: 1.5 }}
+                                            transition={{ duration: 0.5 }}
+                                            className="absolute inset-0 bg-purple-500/20 pointer-events-none"
+                                        />
+                                    )}
+                                </div>
+                                <p className="text-xs text-gray-500 mt-2">Share this link to invite friends</p>
                             </GlassCard>
                         )}
 
@@ -418,7 +629,11 @@ export default function WishlistView({ wishlist: initialWishlist, currentUser })
                             {wishlist.subscribersDetails && wishlist.subscribersDetails.length > 0 ? (
                                 <ul className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                                     {wishlist.subscribersDetails.map((subscriber, i) => (
-                                        <li key={i} className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors">
+                                        <li
+                                            key={i}
+                                            className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
+                                            onClick={() => router.push(`/dashboard/${subscriber.userId}`)}
+                                        >
                                             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center text-white font-bold">
                                                 {subscriber.name?.charAt(0)}
                                             </div>
@@ -439,19 +654,19 @@ export default function WishlistView({ wishlist: initialWishlist, currentUser })
                         {/* Admin / Actions */}
                         {isOwner ? (
                             <button
-                                onClick={handleDeleteWishlist}
-                                className="w-full py-4 rounded-xl border border-white/10 text-gray-400 hover:bg-error/10 hover:text-error hover:border-error/30 transition-all flex items-center justify-center gap-2"
+                                onClick={() => setConfirmationModal({ isOpen: true, type: 'delete' })}
+                                className="w-full py-4 rounded-xl border border-white/10 text-gray-400 hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/30 transition-all flex items-center justify-center gap-2 group"
                             >
-                                <Trash2 size={18} />
-                                Delete Wishlist
+                                <Trash2 size={18} className="group-hover:text-red-500 transition-colors" />
+                                <span className="group-hover:text-red-500 transition-colors">Delete Wishlist</span>
                             </button>
                         ) : isSubscriber && (
                             <button
-                                onClick={handleLeaveWishlist}
-                                className="w-full py-4 rounded-xl border border-white/10 text-gray-400 hover:bg-error/10 hover:text-error hover:border-error/30 transition-all flex items-center justify-center gap-2"
+                                onClick={() => setConfirmationModal({ isOpen: true, type: 'leave' })}
+                                className="w-full py-4 rounded-xl border border-white/10 text-gray-400 hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/30 transition-all flex items-center justify-center gap-2 group"
                             >
-                                <LogOut size={18} />
-                                Leave Wishlist
+                                <LogOut size={18} className="group-hover:text-red-500 transition-colors" />
+                                <span className="group-hover:text-red-500 transition-colors">Leave Wishlist</span>
                             </button>
                         )}
                     </div>
