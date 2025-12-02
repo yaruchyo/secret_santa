@@ -5,7 +5,7 @@ from bson import ObjectId  # <--- CRITICAL IMPORT
 
 # Add parent directory to path to import mongo_db
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from python_packages.service_repository.mongo_db import MongoDB
+from service_repository.mongo_db import MongoDB
 
 # Load environment variables
 load_dotenv()
@@ -80,8 +80,8 @@ def migrate_friend_relationships():
 
             # OPTIONAL: If subscribers of the same wishlist should also be friends
             # enable the loop below. (Based on your description, only Owner<->Sub is required here)
-            # for other_sub in subscribers:
-            #     make_friends(subscriber_id, other_sub)
+            for other_sub in subscribers:
+                make_friends(subscriber_id, other_sub)
 
     print()
 
