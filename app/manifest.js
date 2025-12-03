@@ -2,7 +2,7 @@ export default function manifest() {
     return {
         name: 'Everyone Santa',
         short_name: 'EveryoneSanta',
-        description: 'The premium Secret Santa generator for your holiday gift exchanges.',
+        description: 'The ultimate social wishlist and gifting platform for every occasion.',
         start_url: '/',
         display: 'standalone',
         background_color: '#0a1f1c',

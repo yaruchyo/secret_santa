@@ -12,5 +12,23 @@ export default function sitemap() {
             changeFrequency: 'weekly',
             priority: 0.8,
         },
+        {
+            url: 'https://www.everyonesanta.com/login',
+            lastModified: new Date(),
+            changeFrequency: 'monthly',
+            priority: 0.5,
+        },
+        {
+            url: 'https://www.everyonesanta.com/create',
+            lastModified: new Date(),
+            changeFrequency: 'monthly',
+            priority: 0.8,
+        },
+        {
+            url: 'https://www.everyonesanta.com/join',
+            lastModified: new Date(),
+            changeFrequency: 'monthly',
+            priority: 0.8,
+        },
     ]
 }

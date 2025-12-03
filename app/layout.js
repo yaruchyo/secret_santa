@@ -15,23 +15,25 @@ const playfair = Playfair_Display({
 export const metadata = {
   metadataBase: new URL("https://www.everyonesanta.com"),
   title: {
-    default: "Secret Santa - Start Your Tradition",
+    default: "Everyone Santa | Social Wishlist & Gifting Platform",
     template: "%s | Everyone Santa",
   },
   description:
-    "Experience the art of giving. Organize sophisticated Secret Santa events with ease. The premium platform for your holiday gift exchanges.",
+    "The ultimate social wishlist and gifting platform. Create universal wishlists, share with friends, organize Secret Santa events, and find the perfect gifts for any occasion.",
   keywords: [
-    "Secret Santa",
+    "Social Wishlist",
+    "Universal Registry",
     "Gift Exchange",
-    "Holiday",
-    "Christmas",
-    "Event Organizer",
-    "Wishlist",
+    "Secret Santa",
+    "Birthday Wishlist",
+    "Group Gifting",
+    "Holiday Planner",
+    "Gift Ideas",
   ],
   openGraph: {
-    title: "Secret Santa - Start Your Tradition",
+    title: "Everyone Santa | Social Wishlist & Gifting Platform",
     description:
-      "Experience the art of giving. Organize sophisticated Secret Santa events with ease.",
+      "Create universal wishlists, follow friends, and organize gift exchanges. The modern way to give and receive gifts.",
     url: "https://www.everyonesanta.com",
     siteName: "Everyone Santa",
     locale: "en_US",
@@ -39,9 +41,9 @@ export const metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Secret Santa - Start Your Tradition",
+    title: "Everyone Santa | Social Wishlist & Gifting Platform",
     description:
-      "Experience the art of giving. Organize sophisticated Secret Santa events with ease.",
+      "Create universal wishlists, follow friends, and organize gift exchanges. The modern way to give and receive gifts.",
   },
   robots: {
     index: true,
@@ -79,7 +81,7 @@ export default function RootLayout({ children }) {
       {
         "@type": "SoftwareApplication",
         name: "Everyone Santa",
-        applicationCategory: "LifestyleApplication",
+        applicationCategory: "SocialNetworkingApplication",
         operatingSystem: "Web",
         offers: {
           "@type": "Offer",
@@ -87,10 +89,40 @@ export default function RootLayout({ children }) {
           priceCurrency: "USD",
         },
         featureList: [
+          "Universal Wishlist Creation",
+          "Friend Subscriptions & Updates",
           "Secret Santa Generator",
-          "Wishlist Management",
           "Event Dashboard",
           "Smart Matching Algorithm",
+        ],
+      },
+      {
+        "@type": "FAQPage",
+        mainEntity: [
+          {
+            "@type": "Question",
+            name: "What is a social wishlist?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: "A social wishlist allows you to create a list of gifts you want from any store and share it with friends and family. You can also follow your friends' lists to know exactly what to get them for birthdays and holidays.",
+            },
+          },
+          {
+            "@type": "Question",
+            name: "Can I use Everyone Santa for birthdays?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: "Yes! Everyone Santa is designed for year-round gifting. Create wishlists for birthdays, weddings, baby showers, or any special occasion.",
+            },
+          },
+          {
+            "@type": "Question",
+            name: "Is the Secret Santa generator free?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: "Yes, our Secret Santa generator is completely free to use for organizing holiday gift exchanges with friends, family, or colleagues.",
+            },
+          },
         ],
       },
     ],
