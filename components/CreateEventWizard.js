@@ -63,13 +63,21 @@ export default function CreateEventWizard({ isLoggedIn }) {
     };
 
     const handleSubmit = async () => {
+        // If user is not logged in, show auth overlay immediately
+        if (!isLoggedIn) {
+            setShowAuth(true);
+            setAuthMode("signup"); // Default to signup
+            return;
+        }
+
+        // User is logged in, proceed with creating event
         setLoading(true);
         try {
             const success = await createEvent();
             if (!success) {
-                // User is not logged in, show Auth Overlay
+                // Unlikely case: logged in but got 401, show auth overlay
                 setShowAuth(true);
-                setAuthMode("signup"); // Default to signup
+                setAuthMode("login");
             }
         } catch (error) {
             console.error(error);

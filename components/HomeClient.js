@@ -5,7 +5,7 @@ import Link from "next/link";
 import Aurora from "@/components/Aurora";
 import StaggeredMenu from "@/components/StaggeredMenu";
 import FloatingDock from "@/components/FloatingDock";
-import { ArrowRight, Gift, Sparkles, LayoutDashboard } from "lucide-react";
+import { ArrowRight, Gift, Sparkles, LayoutDashboard, Calendar, Heart, HelpCircle } from "lucide-react";
 
 export default function HomeClient({ isLoggedIn }) {
     return (
@@ -167,6 +167,62 @@ export default function HomeClient({ isLoggedIn }) {
                             </div>
                         </div>
                     </div>
+                </section>
+
+                {/* Occasions Section */}
+                <section className="space-y-8">
+                    <h2 className="text-3xl md:text-4xl font-serif font-bold text-white text-center">
+                        Perfect for <span className="text-primary">Every Occasion</span>
+                    </h2>
+                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {[
+                            { icon: Calendar, title: "Birthdays", desc: "Make your special day memorable. Share your birthday wishlist with friends." },
+                            { icon: Gift, title: "Holidays", desc: "The ultimate tool for Christmas, Hanukkah, and holiday gift exchanges." },
+                            { icon: Heart, title: "Weddings", desc: "A modern, universal registry for your new beginning together." },
+                            { icon: Sparkles, title: "Just Because", desc: "Keep track of things you love year-round. Never forget a great find." }
+                        ].map((item, index) => (
+                            <div key={index} className="bg-white/5 border border-white/10 p-6 rounded-2xl backdrop-blur-sm hover:bg-white/10 transition-colors text-center">
+                                <item.icon className="text-primary mx-auto mb-4" size={24} />
+                                <h3 className="text-lg font-bold text-white mb-2">{item.title}</h3>
+                                <p className="text-sm text-gray-400 leading-relaxed">{item.desc}</p>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+
+                {/* FAQ Section for GEO */}
+                <section className="space-y-8">
+                    <h2 className="text-3xl md:text-4xl font-serif font-bold text-white text-center">
+                        Frequently Asked <span className="text-primary">Questions</span>
+                    </h2>
+                    <div className="grid md:grid-cols-2 gap-6">
+                        {[
+                            { q: "What is a social wishlist?", a: "A social wishlist allows you to create a list of gifts you want from any store and share it with friends and family. You can also follow your friends' lists to know exactly what to get them for birthdays and holidays." },
+                            { q: "Can I use Everyone Santa for birthdays?", a: "Yes! Everyone Santa is designed for year-round gifting. Create wishlists for birthdays, weddings, baby showers, or any special occasion." },
+                            { q: "Is the Secret Santa generator free?", a: "Yes, our Secret Santa generator is completely free to use for organizing holiday gift exchanges with friends, family, or colleagues." },
+                            { q: "How do I share my list?", a: "Simply copy your unique profile link or invite friends directly through the platform via email or social media." }
+                        ].map((faq, index) => (
+                            <div key={index} className="bg-white/5 border border-white/10 p-6 rounded-2xl backdrop-blur-sm text-left">
+                                <div className="flex items-start gap-3">
+                                    <HelpCircle className="text-primary flex-shrink-0 mt-1" size={20} />
+                                    <div>
+                                        <h3 className="text-lg font-bold text-white mb-2">{faq.q}</h3>
+                                        <p className="text-gray-400 leading-relaxed">{faq.a}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+
+                {/* SEO Text Block */}
+                <section className="space-y-6 text-center max-w-3xl mx-auto pt-8 border-t border-white/10">
+                    <h2 className="text-2xl font-serif font-bold text-white">
+                        The Modern Way to <span className="text-primary">Give & Receive</span>
+                    </h2>
+                    <p className="text-gray-400 leading-relaxed">
+                        Everyone Santa is more than just a <strong>Secret Santa generator</strong>. It's a comprehensive <strong>social gifting platform</strong> designed to bring people together. Whether you're organizing a <strong>holiday gift exchange</strong>, creating a <strong>birthday wishlist</strong>, or managing a <strong>wedding registry</strong>, we make the process seamless and fun. Say goodbye to spreadsheets and duplicate gifts. Join the community making gifting meaningful again.
+                    </p>
                 </section>
             </article>
         </main>
